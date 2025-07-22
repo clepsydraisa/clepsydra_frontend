@@ -1,5 +1,6 @@
 import React from 'react';
 import { Download, FileText, Database, ChartBar, Folder } from 'lucide-react';
+import dbPoster from '../assets/images/db_poster_rm.png';
 
 const DataBibliography: React.FC = () => {
   const downloads = [
@@ -201,7 +202,7 @@ const DataBibliography: React.FC = () => {
           <div className="flex justify-center">
             <div className="w-full md:w-1/2">
               <img
-                src="/images/db_poster_rm.png"
+                src={dbPoster}
                 alt="Esquema da Base de Dados DBeaver"
                 className="w-full h-auto"
                 style={{ maxHeight: 'none' }}
