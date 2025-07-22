@@ -16,40 +16,16 @@ const HomePage: React.FC = () => {
           />
         </Link>
 
-        {/* Path4Med Side - Sem link */}
-        <div className="project-side path4med-side cursor-default">
+        {/* Path4Med Side */}
+        <Link to="https://path4med.interreg-euro-med.eu/" target="_blank" rel="noopener noreferrer" className="project-side path4med-side">
           <img
-            src="https://www.path4med.eu/wp-content/uploads/2024/09/logo-path4med-1.svg"
+            src="https://path4med.interreg-euro-med.eu/wp-content/uploads/2023/12/logo-path4med.png"
             alt="Path4Med Project Logo"
-            className="project-logo"
+            className="project-logo path4med-logo"
             loading="lazy"
           />
-        </div>
+        </Link>
       </div>
-
-      {/* Test Content */}
-      <div className="fixed top-4 left-4 bg-white p-4 rounded shadow-lg z-50">
-        <h2 className="text-lg font-bold text-blue-900 mb-2">Teste de Carregamento</h2>
-        <p className="text-sm text-gray-700 mb-2">Se vê isto, a aplicação está funcionando!</p>
-        <Link to="/tarefas" className="text-blue-600 hover:underline">Ir para Tarefas</Link>
-      </div>
-
-      {/* Minimalist Footer */}
-      <footer className="fixed bottom-0 w-full bg-black bg-opacity-80 py-2 z-20">
-        <div className="text-center">
-          <p className="text-xs text-gray-400">
-            Developed by Diogo Pinto |
-            <a
-              href="https://github.com/clepsydraisa/clepsydra_isa"
-              className="text-blue-400 hover:underline ml-1"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              clepsydraisa/clepsydra_isa
-            </a>
-          </p>
-        </div>
-      </footer>
     </div>
   );
 };
