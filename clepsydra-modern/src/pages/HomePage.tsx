@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import logoC from '../assets/images/logo_c.png';
-import logoP from '../assets/images/logo_p.png';
+import path4medSvg from '../assets/images/logo-path4med-1.svg';
 
 const HomePage: React.FC = () => {
   return (
@@ -20,7 +20,7 @@ const HomePage: React.FC = () => {
         {/* Path4Med Side - Sem link */}
         <div className="project-side path4med-side cursor-default">
           <img
-            src={logoP}
+            src={path4medSvg}
             alt="Path4Med Project Logo"
             className="project-logo path4med-logo"
             loading="eager"
