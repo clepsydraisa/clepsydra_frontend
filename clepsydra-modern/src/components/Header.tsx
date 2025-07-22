@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, CheckSquare, Users, Database, BarChart3, Activity } from 'lucide-react';
+import logoC2 from '../assets/images/logo_c2.png';
 
 const Header: React.FC = () => {
   const location = useLocation();
@@ -21,7 +22,7 @@ const Header: React.FC = () => {
         <div className="flex items-center space-x-4">
           <a href="https://clepsydra.interreg-euro-med.eu/" target="_blank" rel="noopener noreferrer">
             <img
-              src="/images/logo_c2.png"
+              src={logoC2}
               alt="Clepsydra Logo"
               className="h-16 w-auto"
               loading="eager"

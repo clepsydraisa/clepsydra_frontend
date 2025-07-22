@@ -1,4 +1,5 @@
 import React from 'react';
+import logoFooter from '../assets/images/logo_footer_c.png';
 
 const Footer: React.FC = () => {
   return (
@@ -15,7 +16,7 @@ const Footer: React.FC = () => {
       <footer className="bg-white py-4 px-6 shadow">
         <div className="container mx-auto flex justify-center items-center min-h-[80px]">
           <img 
-            src="/images/logo_footer_c.png" 
+            src={logoFooter} 
             alt="Logos dos parceiros do projeto Clepsydra" 
             className="w-auto h-12 max-w-full object-contain" 
             loading="eager"

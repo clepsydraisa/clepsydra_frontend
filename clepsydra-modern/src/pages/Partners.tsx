@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
 import { ChevronRight } from 'lucide-react';
+import apaLogo from '../assets/images/apa_lg.png';
+import arLogo from '../assets/images/ar_lg.png';
+import choldaLogo from '../assets/images/quintacholda_lg.png';
+import fenaregLogo from '../assets/images/fenareg_lg.png';
+import arbvsLogo from '../assets/images/arbvs_lg.jpg';
+import aquagriLogo from '../assets/images/aquagri_lg.png';
+import lusofonaLogo from '../assets/images/lusofona_lg.png';
 
 interface Partner {
   id: string;
@@ -17,49 +24,49 @@ const Partners: React.FC = () => {
       id: 'apa',
       name: 'APA',
       description: 'A Agência Portuguesa do Ambiente (APA) é a entidade nacional responsável pela implementação das políticas de ambiente e desenvolvimento sustentável em Portugal, com especial enfoque na gestão integrada dos recursos hídricos, proteção do ambiente, prevenção e controlo da poluição, adaptação às alterações climáticas e promoção da sustentabilidade ambiental. Atua como autoridade nacional da água, coordenando a gestão das bacias hidrográficas e promovendo a participação pública na defesa do ambiente.',
-      logo: '/images/apa_lg.png',
+      logo: apaLogo,
       logoHeight: 'h-20'
     },
     {
       id: 'ar',
       name: 'AR',
       description: 'Águas do Ribatejo (AR) é uma empresa intermunicipal responsável pelo abastecimento de água e saneamento em sete concelhos do Ribatejo. Destaca-se pela gestão integrada do ciclo urbano da água, pela promoção da inclusão social e ambiental, e pela implementação de projetos inovadores de sustentabilidade, qualidade da água e educação ambiental. É reconhecida como caso de estudo internacional pelo seu modelo de gestão eficiente e sustentável.',
-      logo: '/images/ar_lg.png',
+      logo: arLogo,
       logoHeight: 'h-16'
     },
     {
       id: 'cholda',
       name: 'Quinta da Cholda',
       description: 'A Quinta da Cholda é uma exploração agrícola localizada em Azinhaga, Ribatejo, dedicada à produção agrícola sustentável e à inovação no setor agroalimentar. Com uma forte ligação ao território e à tradição agrícola da região, aposta em práticas de produção responsáveis, valorizando a qualidade dos produtos e a preservação ambiental.',
-      logo: '/images/quintacholda_lg.png',
+      logo: choldaLogo,
       logoHeight: 'h-28'
     },
     {
       id: 'fnareg',
       name: 'FNAREG',
       description: 'A Federação Nacional de Regantes de Portugal (FENAREG) representa as associações de regantes a nível nacional, promovendo a defesa, valorização e modernização do regadio em Portugal. Atua na articulação com entidades públicas e privadas, desenvolve projetos de inovação, sustentabilidade e eficiência hídrica, e defende políticas que assegurem a viabilidade e competitividade da agricultura de regadio.',
-      logo: '/images/fenareg_lg.png',
+      logo: fenaregLogo,
       logoHeight: 'h-20'
     },
     {
       id: 'arbvs',
       name: 'ARBVS',
       description: 'A Associação de Regantes e Beneficiários do Vale do Sorraia (ARBVS) gere, desde 1959, a administração, conservação e exploração do Aproveitamento Hidroagrícola do Vale do Sorraia. É responsável pela gestão eficiente da água para rega, modernização das infraestruturas, apoio técnico aos agricultores e implementação de projetos de inovação e sustentabilidade agrícola na região do Ribatejo.',
-      logo: '/images/arbvs_lg.jpg',
+      logo: arbvsLogo,
       logoHeight: 'h-20'
     },
     {
       id: 'aquagri',
       name: 'AQUAGRI',
       description: 'A AQUAGRI é uma empresa especializada em serviços e equipamentos para a gestão eficiente da água de rega, integrando tecnologias de monitorização, sensores e plataformas digitais. Desde 1998, apoia agricultores na otimização da rega, promovendo a sustentabilidade, inovação tecnológica e uso racional dos recursos hídricos, com soluções adaptadas à agricultura moderna.',
-      logo: '/images/aquagri_lg.png',
+      logo: aquagriLogo,
       logoHeight: 'h-16'
     },
     {
       id: 'lusofona',
       name: 'Universidade Lusófona',
       description: 'A Universidade Lusófona é a maior universidade privada de Portugal, dedicada ao ensino, investigação e inovação em diversas áreas do conhecimento. Tem como missão contribuir para o desenvolvimento científico, cultural, económico e social de Portugal e dos países lusófonos, promovendo a internacionalização, a inclusão e a ligação entre ciência, sociedade e empresas.',
-      logo: '/images/lusofona_lg.png',
+      logo: lusofonaLogo,
       logoHeight: 'h-20'
     }
   ];

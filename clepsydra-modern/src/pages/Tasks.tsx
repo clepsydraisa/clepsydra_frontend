@@ -1,4 +1,5 @@
 import React from 'react';
+import europaClep from '../assets/images/europa_clep.png';
 
 const Tasks: React.FC = () => {
   return (
@@ -7,7 +8,7 @@ const Tasks: React.FC = () => {
         {/* Mapa como background decorativo, ocupa parte da área principal */}
         <div className="absolute right-0 top-0 h-[65vh] w-[900px] max-w-[60vw] pointer-events-none select-none z-0 overflow-hidden flex items-center justify-end">
           <img 
-            src="/images/europa_clep.png" 
+            src={europaClep} 
             alt="Europa Clepsydra" 
             className="h-full w-auto object-contain object-right" 
             loading="eager"

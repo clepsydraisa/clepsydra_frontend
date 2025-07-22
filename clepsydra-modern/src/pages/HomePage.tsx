@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import logoC from '../assets/images/logo_c.png';
 
 const HomePage: React.FC = () => {
   return (
@@ -8,7 +9,7 @@ const HomePage: React.FC = () => {
         {/* Clepsydra Side */}
         <Link to="/about-c" className="project-side clepsydra-side">
           <img
-            src="/images/logo_c.png"
+            src={logoC}
             alt="Clepsydra Project Logo"
             className="project-logo clepsydra-logo"
             loading="eager"

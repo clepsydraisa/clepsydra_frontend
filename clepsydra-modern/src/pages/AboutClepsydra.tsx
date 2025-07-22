@@ -1,11 +1,12 @@
 import React from 'react';
+import pt5Bg from '../assets/images/pt5_bg.png';
 
 const AboutClepsydra: React.FC = () => {
   return (
     <div className="flex-grow w-full p-0 m-0 pt-24">
       <div className="w-full h-full flex justify-center items-center p-0 m-0">
         <img 
-          src="/images/pt5_bg.png" 
+          src={pt5Bg} 
           alt="Clepsydra Background" 
           className="object-contain"
           loading="eager"
