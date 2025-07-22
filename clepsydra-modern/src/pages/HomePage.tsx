@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import logoC from '../assets/images/logo_c.png';
+import path4medLogo from '../assets/images/path4med_logo.png';
 
 const HomePage: React.FC = () => {
   return (
@@ -16,15 +17,15 @@ const HomePage: React.FC = () => {
           />
         </Link>
 
-        {/* Path4Med Side */}
-        <Link to="https://path4med.interreg-euro-med.eu/" target="_blank" rel="noopener noreferrer" className="project-side path4med-side">
+        {/* Path4Med Side - Sem link */}
+        <div className="project-side path4med-side cursor-default">
           <img
-            src="https://path4med.interreg-euro-med.eu/wp-content/uploads/2023/12/logo-path4med.png"
+            src={path4medLogo}
             alt="Path4Med Project Logo"
             className="project-logo path4med-logo"
-            loading="lazy"
+            loading="eager"
           />
-        </Link>
+        </div>
       </div>
     </div>
   );
