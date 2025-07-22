@@ -124,19 +124,15 @@ code {
 
 /* Task page styles */
 .tarefa-shadow {
-  box-shadow: 0 8px 32px 0 rgba(220,220,220,0.7);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-.tarefa-shadow-hover:hover {
-  box-shadow: 0 16px 48px 0 rgba(255,255,255,0.8);
-  z-index: 10;
-  transform: scale(1.10);
+.tarefa-shadow-hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .europa-clep-img {
-  max-width: 420px;
-  max-height: 60vh;
-  object-fit: contain;
+  filter: brightness(0.9) contrast(1.1);
 }
 
 /* Infinite carousel styles */
@@ -187,7 +183,6 @@ code {
   }
 }
 
-/* Carousel tooltip styles */
 .carousel-tooltip {
   pointer-events: none;
   background: #f3f4f6;
@@ -393,6 +388,14 @@ code {
   .max-w-\[600px\] { 
     max-width: 90vw !important; 
   }
+  .carousel-track img {
+    width: 24rem;
+    height: 15rem;
+  }
+  
+  .carousel-infinite {
+    height: 15rem;
+  }
 }
 
 @media (max-width: 768px) {
@@ -407,5 +410,13 @@ code {
   }
   .h-\[220px\] { 
     height: auto !important; 
+  }
+  .carousel-track img {
+    width: 20rem;
+    height: 12rem;
+  }
+  
+  .carousel-infinite {
+    height: 12rem;
   }
 }
