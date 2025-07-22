@@ -14,14 +14,14 @@ const HomePage: React.FC = () => {
           />
         </Link>
 
-        {/* Path4Med Side */}
-        <Link to="/about-p" className="project-side path4med-side">
+        {/* Path4Med Side - Sem link */}
+        <div className="project-side path4med-side cursor-default">
           <img
             src="https://www.path4med.eu/wp-content/uploads/2024/09/logo-path4med-1.svg"
             alt="Path4Med Project Logo"
             className="project-logo"
           />
-        </Link>
+        </div>
       </div>
 
       {/* Minimalist Footer */}

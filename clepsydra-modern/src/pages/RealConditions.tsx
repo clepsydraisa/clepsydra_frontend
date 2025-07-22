@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 
 const RealConditions: React.FC = () => {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipContent, setTooltipContent] = useState('');
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
@@ -70,27 +68,6 @@ const RealConditions: React.FC = () => {
     }
   ];
 
-  const platforms = [
-    {
-      name: 'Irrocloud',
-      url: 'https://www.irrocloud.com/irrocloud/login/?next=/',
-      image: 'https://raw.githubusercontent.com/clepsydraisa/clepsydra_isa/refs/heads/main/images/irrocloud.png'
-    },
-    {
-      name: 'myIrrigation',
-      url: 'https://myirrigation.eu/login',
-      image: 'https://raw.githubusercontent.com/clepsydraisa/clepsydra_isa/refs/heads/main/images/myirrigation.png'
-    }
-  ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % images.length);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [images.length]);
-
   const handleImageHover = (event: React.MouseEvent, legend: string) => {
     setTooltipContent(legend);
     setTooltipPosition({ x: event.clientX, y: event.clientY });
@@ -101,12 +78,27 @@ const RealConditions: React.FC = () => {
     setShowTooltip(false);
   };
 
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  const positionTooltip = (event: React.MouseEvent) => {
+    const offset = 18;
+    let left = event.clientX + offset;
+    let top = event.clientY + offset;
+    
+    // Ajustar para não sair da janela
+    const winWidth = window.innerWidth;
+    const winHeight = window.innerHeight;
+    
+    if (left + 200 > winWidth) { // 200px é uma estimativa da largura do tooltip
+      left = winWidth - 210;
+    }
+    if (top + 50 > winHeight) { // 50px é uma estimativa da altura do tooltip
+      top = winHeight - 60;
+    }
+    
+    setTooltipPosition({ x: left, y: top });
   };
 
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  const handleImageMove = (event: React.MouseEvent) => {
+    positionTooltip(event);
   };
 
   return (
@@ -125,54 +117,39 @@ const RealConditions: React.FC = () => {
           </p>
         </section>
 
-        {/* Carrossel de imagens */}
+        {/* Carrossel de imagens infinito */}
         <section className="mb-10">
-          <div className="relative max-w-4xl mx-auto">
-            <div className="relative overflow-hidden rounded-lg shadow-lg">
-              <div className="flex transition-transform duration-500 ease-in-out">
-                {images.map((image, index) => (
-                  <div
-                    key={index}
-                    className="relative flex-shrink-0 w-full"
-                    style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}
-                  >
-                    <img
-                      src={image.src}
-                      alt={image.alt}
-                      className="w-full h-96 object-cover"
-                      onMouseEnter={(e) => handleImageHover(e, image.legend)}
-                      onMouseLeave={handleImageLeave}
-                    />
-                  </div>
-                ))}
-              </div>
-              
-              {/* Controles do carrossel */}
-              <button
-                onClick={prevImage}
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 rounded-full p-2 hover:bg-opacity-100 transition-all"
-              >
-                <ChevronLeft className="w-6 h-6 text-gray-700" />
-              </button>
-              <button
-                onClick={nextImage}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 rounded-full p-2 hover:bg-opacity-100 transition-all"
-              >
-                <ChevronRight className="w-6 h-6 text-gray-700" />
-              </button>
-
-              {/* Indicadores */}
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                {images.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentImageIndex(index)}
-                    className={`w-3 h-3 rounded-full transition-all ${
-                      index === currentImageIndex ? 'bg-white' : 'bg-white bg-opacity-50'
-                    }`}
+          <div className="carousel-infinite">
+            <div className="carousel-track">
+              {/* Primeira sequência de imagens */}
+              {images.map((image, index) => (
+                <div key={`first-${index}`} className="relative group">
+                  <img 
+                    src={image.src} 
+                    alt={image.alt} 
+                    data-legend={image.legend} 
+                    className={`carousel-img ${index === 11 ? 'img-16' : ''}`}
+                    onMouseEnter={(e) => handleImageHover(e, image.legend)}
+                    onMouseMove={handleImageMove}
+                    onMouseLeave={handleImageLeave}
                   />
-                ))}
-              </div>
+                </div>
+              ))}
+              
+              {/* Duplicação das imagens para o efeito infinito */}
+              {images.map((image, index) => (
+                <div key={`second-${index}`} className="relative group">
+                  <img 
+                    src={image.src} 
+                    alt={image.alt} 
+                    data-legend={image.legend} 
+                    className={`carousel-img ${index === 11 ? 'img-16' : ''}`}
+                    onMouseEnter={(e) => handleImageHover(e, image.legend)}
+                    onMouseMove={handleImageMove}
+                    onMouseLeave={handleImageLeave}
+                  />
+                </div>
+              ))}
             </div>
           </div>
         </section>
@@ -183,94 +160,43 @@ const RealConditions: React.FC = () => {
             A experimentação é suportada pelas plataformas Irrocloud e myIrrigation. 
             Estas permitem monitorizar remotamente a humidade do solo (teor de água e potencial de água).
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
-            {platforms.map((platform, index) => (
-              <div key={index} className="flex flex-col items-center">
-                <a 
-                  href={platform.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="group"
-                >
-                  <img 
-                    src={platform.image} 
-                    alt={platform.name} 
-                    className="rounded-lg shadow-md w-full max-w-xs mb-2 hover:scale-105 transition-transform duration-300" 
-                  />
-                  <div className="flex items-center justify-center">
-                    <span className="text-blue-800 font-semibold mr-2">{platform.name}</span>
-                    <ExternalLink className="w-4 h-4 text-blue-600 group-hover:text-blue-800" />
-                  </div>
-                </a>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Informações técnicas */}
-        <section className="mb-10">
-          <h3 className="text-2xl font-semibold text-blue-900 mb-4">
-            Protocolos de Monitorização
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-blue-50 p-6 rounded-lg">
-              <h4 className="text-lg font-semibold text-blue-900 mb-3">
-                Água Subterrânea
-              </h4>
-              <ul className="space-y-2 text-gray-700">
-                <li>• Profundidade da toalha freática</li>
-                <li>• Concentração de nitratos</li>
-                <li>• Condutividade elétrica</li>
-                <li>• Monitorização contínua</li>
-              </ul>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+            <div className="flex flex-col items-center">
+              <a href="https://www.irrocloud.com/irrocloud/login/?next=/" target="_blank" rel="noopener noreferrer">
+                <img 
+                  src="https://raw.githubusercontent.com/clepsydraisa/clepsydra_isa/refs/heads/main/images/irrocloud.png" 
+                  alt="Irrocloud" 
+                  className="rounded-lg shadow-md w-full max-w-xs mb-2 hover:scale-105 transition" 
+                />
+              </a>
+              <span className="text-blue-800 font-semibold">Irrocloud</span>
             </div>
-            <div className="bg-green-50 p-6 rounded-lg">
-              <h4 className="text-lg font-semibold text-green-900 mb-3">
-                Zona Não Saturada
-              </h4>
-              <ul className="space-y-2 text-gray-700">
-                <li>• Fluxos de água no solo</li>
-                <li>• Fluxos de azoto</li>
-                <li>• Potencial de água</li>
-                <li>• Humidade do solo</li>
-              </ul>
+            <div className="flex flex-col items-center">
+              <a href="https://myirrigation.eu/login" target="_blank" rel="noopener noreferrer">
+                <img 
+                  src="https://raw.githubusercontent.com/clepsydraisa/clepsydra_isa/refs/heads/main/images/myirrigation.png" 
+                  alt="myIrrigation" 
+                  className="rounded-lg shadow-md w-full max-w-xs mb-2 hover:scale-105 transition" 
+                />
+              </a>
+              <span className="text-blue-800 font-semibold">MyIrrigation</span>
             </div>
           </div>
         </section>
       </div>
-      
+
       {/* Tooltip */}
       {showTooltip && (
         <div
-          className="fixed z-50 bg-gray-800 text-white px-3 py-2 rounded-lg text-sm max-w-xs"
+          className="carousel-tooltip visible"
           style={{
-            left: tooltipPosition.x + 10,
-            top: tooltipPosition.y - 10,
-            pointerEvents: 'none'
+            left: tooltipPosition.x + 'px',
+            top: tooltipPosition.y + 'px'
           }}
         >
           {tooltipContent}
         </div>
       )}
-      
-      {/* Friso colorido */}
-      <div 
-        className="w-full h-8" 
-        style={{ 
-          background: 'linear-gradient(to right, #17479e, #0e6bb5, #0093d3, #5a5a8c, #c1272d, #ff6f1f, #d6b08c, #a3bfa8, #4a2c0a)' 
-        }}
-      />
-      
-      {/* Footer */}
-      <footer className="bg-white py-4 px-6 shadow">
-        <div className="container mx-auto flex justify-center items-center min-h-[80px]">
-          <img 
-            src="https://github.com/clepsydraisa/clepsydra_isa/blob/main/images/logo_footer_c.png?raw=true" 
-            alt="Logos rodapé" 
-            className="w-auto h-12" 
-          />
-        </div>
-      </footer>
     </div>
   );
 };
