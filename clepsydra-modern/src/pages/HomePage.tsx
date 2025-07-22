@@ -27,6 +27,21 @@ const HomePage: React.FC = () => {
           />
         </div>
       </div>
+
+      {/* Minimalist Footer */}
+      <footer className="footer text-center">
+        <p className="text-xs text-gray-400">
+          Developed by Diogo Pinto |
+          <a
+            href="https://github.com/clepsydraisa/clepsydra_isa"
+            className="text-blue-400 hover:underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            clepsydraisa/clepsydra_isa
+          </a>
+        </p>
+      </footer>
     </div>
   );
 };

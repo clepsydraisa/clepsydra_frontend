@@ -122,7 +122,7 @@ code {
   transform: scale(0.96);
 }
 
-/* Task page styles */
+/* Custom styles for the application */
 .tarefa-shadow {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
@@ -133,6 +133,16 @@ code {
 
 .europa-clep-img {
   filter: brightness(0.9) contrast(1.1);
+}
+
+/* Homepage footer styles */
+.footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 0.5rem;
+  z-index: 20;
 }
 
 /* Infinite carousel styles */
