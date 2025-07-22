@@ -1,0 +1,118 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Custom styles for Clepsydra project */
+.split-container {
+  position: relative;
+  height: 100vh;
+  width: 100vw;
+  background: linear-gradient(
+    90deg,
+    #1a1a1a 0%,
+    #2d2d2d 45%,
+    #2d2d2d 55%,
+    #1a1a1a 100%
+  );
+}
+
+.project-side {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.clepsydra-side {
+  left: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(14, 14, 14) 0%,
+    rgba(45, 45, 45, 0.8) 100%
+  );
+}
+
+.path4med-side {
+  right: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(45, 45, 45, 0.8) 0%,
+    rgb(14, 14, 14) 100%
+  );
+}
+
+.project-logo {
+  max-width: 300px;
+  transition: transform 0.3s ease;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.1));
+}
+
+.clepsydra-logo {
+  max-width: 460px;
+}
+
+.project-side:hover .project-logo {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.2));
+}
+
+.nav-link {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: -2px;
+  left: 0;
+  background-color: #174192;
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+.nav-link.active {
+  font-weight: 600;
+}
+
+.nav-link.active::after {
+  width: 100%;
+}
+
+/* AI Button styles */
+.ai-btn {
+  background-size: 200% 100%;
+  background-position: left center;
+  transition: background-position 0.4s cubic-bezier(0.4,0,0.2,1), transform 0.15s cubic-bezier(0.4,0,0.2,1);
+}
+
+.ai-btn:hover {
+  background-position: right center;
+  transform: scale(1.07);
+}
+
+.ai-btn:active {
+  transform: scale(0.96);
+}
