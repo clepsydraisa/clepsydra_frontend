@@ -8,9 +8,10 @@ const HomePage: React.FC = () => {
         {/* Clepsydra Side */}
         <Link to="/about-c" className="project-side clepsydra-side">
           <img
-            src="https://github.com/clepsydraisa/clepsydra_isa/blob/main/images/logo_c.png?raw=true"
+            src="/images/logo_c.png"
             alt="Clepsydra Project Logo"
             className="project-logo clepsydra-logo"
+            loading="eager"
           />
         </Link>
 
@@ -20,6 +21,7 @@ const HomePage: React.FC = () => {
             src="https://www.path4med.eu/wp-content/uploads/2024/09/logo-path4med-1.svg"
             alt="Path4Med Project Logo"
             className="project-logo"
+            loading="lazy"
           />
         </div>
       </div>

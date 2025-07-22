@@ -1,101 +1,74 @@
-# Clepsydra Frontend - Versão Moderna
+# 💧 Clepsydra App
 
-Este é o novo frontend do projeto Clepsydra, desenvolvido com tecnologias modernas e escaláveis.
+Interface moderna para monitorização e gestão de recursos hídricos do projeto Clepsydra.
 
-## 🚀 Tecnologias Utilizadas
+## 🚀 Demo
 
-### Frontend
-- **React 18** - Biblioteca JavaScript para interfaces de usuário
-- **TypeScript** - Superset do JavaScript com tipagem estática
-- **Tailwind CSS** - Framework CSS utilitário
-- **React Router** - Roteamento para aplicações React
-- **Lucide React** - Ícones modernos e leves
+Acesse a aplicação em: [https://diogopinto.github.io/clepsydra_frontend](https://diogopinto.github.io/clepsydra_frontend)
 
-### Mapas e Visualização
-- **Leaflet** - Biblioteca de mapas interativos
-- **React Leaflet** - Componentes React para Leaflet
+## 🛠️ Tecnologias
 
-### Infraestrutura
-- **GitHub Pages** - Hospedagem estática
-- **Cloudflare CDN** - Rede de entrega de conteúdo
-- **Varnish Cache** - Cache de proxy reverso
-- **HSTS** - Segurança de transporte HTTP estrito
+- **React 19** - Framework principal
+- **TypeScript** - Tipagem estática
+- **Tailwind CSS** - Estilização
+- **React Router** - Navegação
+- **Leaflet** - Mapas interativos
+- **Lucide React** - Ícones
 
 ## 📦 Instalação
 
 ```bash
+# Clonar o repositório
+git clone https://github.com/diogopinto/clepsydra_frontend.git
+
+# Entrar no diretório
+cd clepsydra_frontend/clepsydra-modern
+
 # Instalar dependências
 npm install
 
-# Executar em modo de desenvolvimento
+# Executar em desenvolvimento
 npm start
-
-# Construir para produção
-npm run build
-
-# Executar testes
-npm test
 ```
-
-## 🏗️ Estrutura do Projeto
-
-```
-src/
-├── components/     # Componentes reutilizáveis
-├── pages/         # Páginas da aplicação
-├── contexts/      # Contextos React (estado global)
-├── utils/         # Funções utilitárias
-├── assets/        # Recursos estáticos
-└── App.tsx        # Componente principal
-```
-
-## 🎨 Design System
-
-O projeto utiliza um design system consistente com:
-
-- **Cores principais**: Clepsydra Blue (#174192)
-- **Fonte**: Inter (Google Fonts)
-- **Layout**: Responsivo com Tailwind CSS
-- **Componentes**: Reutilizáveis e acessíveis
-
-## 🔧 Configuração
-
-### Tailwind CSS
-O Tailwind está configurado com cores customizadas e plugins para formulários e tipografia.
-
-### TypeScript
-Configuração estrita para melhor qualidade de código e detecção de erros.
-
-## 📱 Funcionalidades
-
-- [x] Página inicial com seleção de projetos
-- [x] Navegação responsiva
-- [x] Roteamento entre páginas
-- [x] Layout consistente
-- [ ] Integração com mapas (Leaflet)
-- [ ] Visualizações de dados
-- [ ] Monitoramento em tempo real
 
 ## 🚀 Deploy
 
-O projeto está configurado para deploy no GitHub Pages:
-
 ```bash
-npm run build
+# Fazer deploy para GitHub Pages
+npm run deploy
 ```
 
-## 🤝 Contribuição
+## 📁 Estrutura
 
-1. Faça um fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
+```
+clepsydra-modern/
+├── src/
+│   ├── components/     # Componentes reutilizáveis
+│   ├── pages/         # Páginas da aplicação
+│   ├── contexts/      # Contextos React
+│   └── utils/         # Utilitários
+├── public/
+│   ├── images/        # Imagens otimizadas
+│   └── favicon.svg    # Favicon personalizado
+└── package.json
+```
+
+## 🎯 Funcionalidades
+
+- **🏠 Homepage** - Seleção de projetos
+- **📋 Tarefas** - Visualização das tarefas do projeto
+- **🤝 Parceiros** - Informações sobre parceiros
+- **📊 Visualização** - Mapas e gráficos interativos
+- **🌊 Condições Reais** - Monitorização em tempo real
+- **📚 Biblioteca de Dados** - Metadados e recursos
+
+## 🔧 Scripts Disponíveis
+
+- `npm start` - Executar em desenvolvimento
+- `npm run build` - Build de produção
+- `npm run deploy` - Deploy para GitHub Pages
+- `npm test` - Executar testes
 
 ## 📄 Licença
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
-## 👨‍💻 Desenvolvido por
-
-Diogo Pinto - [GitHub](https://github.com/clepsydraisa/clepsydra_isa)
+Este projeto faz parte do Clepsydra Project - Sistema de monitorização de recursos hídricos.

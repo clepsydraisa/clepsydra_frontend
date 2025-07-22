@@ -2,6 +2,7 @@
   "name": "clepsydra-modern",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://diogopinto.github.io/clepsydra_frontend",
   "dependencies": {
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/typography": "^0.5.16",
@@ -39,6 +40,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "build:prod": "GENERATE_SOURCEMAP=false react-scripts build",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
     "analyze": "npm run build && npx serve -s build",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
@@ -62,5 +65,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
   }
 }

@@ -388,10 +388,10 @@ code {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Responsive styles for tasks page */
+/* Responsive styles for tasks page - exact from HTML */
 @media (max-width: 900px) {
-  .w-\[600px\] { 
-    width: 90vw !important; 
+  .max-w-\[600px\] { 
+    max-width: 90vw !important; 
   }
 }
 
@@ -399,11 +399,11 @@ code {
   .grid-cols-1, .md\:grid-cols-2 { 
     grid-template-columns: 1fr !important; 
   }
-  .w-full.max-w-4xl { 
+  .max-w-4xl { 
     align-items: center; 
   }
-  .w-\[600px\] { 
-    width: 100% !important; 
+  .max-w-\[600px\] { 
+    max-width: 100% !important; 
   }
   .h-\[220px\] { 
     height: auto !important; 

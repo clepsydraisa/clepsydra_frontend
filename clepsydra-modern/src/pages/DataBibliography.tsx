@@ -201,10 +201,11 @@ const DataBibliography: React.FC = () => {
           <div className="flex justify-center">
             <div className="w-full md:w-1/2">
               <img
-                src="https://github.com/diogopinto1/path4med/blob/main/db_poster_rm.png?raw=true"
+                src="/images/db_poster_rm.png"
                 alt="Esquema da Base de Dados DBeaver"
                 className="w-full h-auto"
                 style={{ maxHeight: 'none' }}
+                loading="lazy"
               />
               <p className="text-gray-500 text-sm mt-1">
                 <strong> Fig 1.</strong> Screenshot do esquema da base de dados Clepsydra no DBeaver, mostrando a estrutura relacional dos dados de qualidade da água, meteorologia e aquíferos.

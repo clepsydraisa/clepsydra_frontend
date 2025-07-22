@@ -5,9 +5,10 @@ const AboutClepsydra: React.FC = () => {
     <div className="flex-grow w-full p-0 m-0 pt-24">
       <div className="w-full h-full flex justify-center items-center p-0 m-0">
         <img 
-          src="https://github.com/clepsydraisa/clepsydra_isa/blob/main/images/pt5_bg.png?raw=true" 
+          src="/images/pt5_bg.png" 
           alt="Clepsydra Background" 
           className="object-contain"
+          loading="eager"
           style={{ 
             width: '96vw', 
             height: 'calc(96vh - 96px - 32px - 80px)', 
@@ -17,8 +18,6 @@ const AboutClepsydra: React.FC = () => {
           }}
         />
       </div>
-      
-
     </div>
   );
 };

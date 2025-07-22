@@ -21,9 +21,10 @@ const Header: React.FC = () => {
         <div className="flex items-center space-x-4">
           <a href="https://clepsydra.interreg-euro-med.eu/" target="_blank" rel="noopener noreferrer">
             <img
-              src="https://github.com/clepsydraisa/clepsydra_isa/blob/main/images/logo_c2.png?raw=true"
+              src="/images/logo_c2.png"
               alt="Clepsydra Logo"
               className="h-16 w-auto"
+              loading="eager"
             />
           </a>
         </div>

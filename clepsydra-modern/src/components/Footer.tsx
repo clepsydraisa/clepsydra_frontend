@@ -15,9 +15,10 @@ const Footer: React.FC = () => {
       <footer className="bg-white py-4 px-6 shadow">
         <div className="container mx-auto flex justify-center items-center min-h-[80px]">
           <img 
-            src="https://github.com/clepsydraisa/clepsydra_isa/blob/main/images/logo_footer_c.png?raw=true" 
+            src="/images/logo_footer_c.png" 
             alt="Logos dos parceiros do projeto Clepsydra" 
             className="w-auto h-12 max-w-full object-contain" 
+            loading="eager"
           />
         </div>
       </footer>

@@ -7,62 +7,62 @@ const RealConditions: React.FC = () => {
 
   const images = [
     {
-      src: 'https://raw.githubusercontent.com/clepsydraisa/clepsydra_isa/refs/heads/main/images/6.jpg',
+      src: '/images/6.jpg',
       alt: 'Campo de milho',
       legend: 'Campo de milho'
     },
     {
-      src: 'https://raw.githubusercontent.com/clepsydraisa/clepsydra_isa/refs/heads/main/images/7.jpg',
+      src: '/images/7.jpg',
       alt: 'Sonda diver',
       legend: 'Sonda diver instalada num furo para medição da profundidade da toalha freática'
     },
     {
-      src: 'https://raw.githubusercontent.com/clepsydraisa/clepsydra_isa/refs/heads/main/images/8.jpg',
+      src: '/images/8.jpg',
       alt: 'Recolha de dados',
       legend: 'Recolha de dados do diver para o computador'
     },
     {
-      src: 'https://raw.githubusercontent.com/clepsydraisa/clepsydra_isa/refs/heads/main/images/2.JPG',
+      src: '/images/2.JPG',
       alt: 'Tensiómetros',
       legend: 'Instalação de uma bateria de tensiómetros para medição do potencial de água no solo'
     },
     {
-      src: 'https://raw.githubusercontent.com/clepsydraisa/clepsydra_isa/refs/heads/main/images/9.jpg',
+      src: '/images/9.jpg',
       alt: 'Bateria de tensiómetros',
       legend: 'Bateria de tensiómetros a diferentes profundidades'
     },
     {
-      src: 'https://raw.githubusercontent.com/clepsydraisa/clepsydra_isa/refs/heads/main/images/10.jpg',
+      src: '/images/10.jpg',
       alt: 'Conexão à cloud',
       legend: 'Conexão à cloud'
     },
     {
-      src: 'https://raw.githubusercontent.com/clepsydraisa/clepsydra_isa/refs/heads/main/images/3.JPG',
+      src: '/images/3.JPG',
       alt: 'Leituras no smartphone',
       legend: 'Leituras do potencial de água no smartphone'
     },
     {
-      src: 'https://raw.githubusercontent.com/clepsydraisa/clepsydra_isa/refs/heads/main/images/12.jpg',
+      src: '/images/12.jpg',
       alt: 'Sonda FDR',
       legend: 'Instalação da sonda FDR de humidade do solo'
     },
     {
-      src: 'https://raw.githubusercontent.com/clepsydraisa/clepsydra_isa/refs/heads/main/images/13.jpg',
+      src: '/images/13.jpg',
       alt: 'Envio remoto',
       legend: 'Envio remoto de informação'
     },
     {
-      src: 'https://raw.githubusercontent.com/clepsydraisa/clepsydra_isa/refs/heads/main/images/14.jpg',
+      src: '/images/14.jpg',
       alt: 'Cápsulas para recolha',
       legend: 'Instalação das cápsulas para recolha da solução do solo e análise de nitratos'
     },
     {
-      src: 'https://raw.githubusercontent.com/clepsydraisa/clepsydra_isa/refs/heads/main/images/15.jpg',
+      src: '/images/15.jpg',
       alt: 'Cápsulas porosas',
       legend: 'Instalação das cápsulas porosas 2'
     },
     {
-      src: 'https://raw.githubusercontent.com/clepsydraisa/clepsydra_isa/refs/heads/main/images/16.jpg',
+      src: '/images/16.jpg',
       alt: 'Recolha da solução',
       legend: 'Recolha da solução do solo'
     }
@@ -164,9 +164,10 @@ const RealConditions: React.FC = () => {
             <div className="flex flex-col items-center">
               <a href="https://www.irrocloud.com/irrocloud/login/?next=/" target="_blank" rel="noopener noreferrer">
                 <img 
-                  src="https://raw.githubusercontent.com/clepsydraisa/clepsydra_isa/refs/heads/main/images/irrocloud.png" 
+                  src="/images/irrocloud.png" 
                   alt="Irrocloud" 
                   className="rounded-lg shadow-md w-full max-w-xs mb-2 hover:scale-105 transition" 
+                  loading="lazy"
                 />
               </a>
               <span className="text-blue-800 font-semibold">Irrocloud</span>
@@ -174,9 +175,10 @@ const RealConditions: React.FC = () => {
             <div className="flex flex-col items-center">
               <a href="https://myirrigation.eu/login" target="_blank" rel="noopener noreferrer">
                 <img 
-                  src="https://raw.githubusercontent.com/clepsydraisa/clepsydra_isa/refs/heads/main/images/myirrigation.png" 
+                  src="/images/myirrigation.png" 
                   alt="myIrrigation" 
                   className="rounded-lg shadow-md w-full max-w-xs mb-2 hover:scale-105 transition" 
+                  loading="lazy"
                 />
               </a>
               <span className="text-blue-800 font-semibold">MyIrrigation</span>
