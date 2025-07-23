@@ -41,13 +41,13 @@ const Visual: React.FC = () => {
   const chartRef = useRef<HTMLCanvasElement>(null);
 
   const variables = [
-    { value: 'profundidade', label: 'Profundidade', color: '#007bff' },
-    { value: 'nitrato', label: 'Nitratos', color: '#28a745' },
-    { value: 'condutividade', label: 'Condutividade', color: '#ffc107' },
-    { value: 'precipitacao', label: 'Precipitação', color: '#800080' },
-    { value: 'rega', label: 'Rega', color: '#ff6b1f' },
-    { value: 'temperaturas', label: 'Temperaturas', color: '#dc3545' },
-    { value: 'caudal', label: 'Caudal', color: '#17a2b8' }
+    { value: 'profundidade', label: 'Profundidade', icon: 'fa-tint', color: 'blue' },
+    { value: 'nitrato', label: 'Nitratos', icon: 'fa-flask', color: 'green' },
+    { value: 'condutividade', label: 'Condutividade', icon: 'fa-bolt', color: 'yellow' },
+    { value: 'precipitacao', label: 'Precipitação', icon: 'fa-cloud-rain', color: 'cyan' },
+    { value: 'rega', label: 'Rega', icon: 'fa-tint', color: 'blue' },
+    { value: 'temperaturas', label: 'Temperaturas', icon: 'fa-thermometer-half', color: 'red' },
+    { value: 'caudal', label: 'Caudal', icon: 'fa-water', color: 'blue' }
   ];
 
   useEffect(() => {
@@ -158,7 +158,7 @@ const Visual: React.FC = () => {
       case 'nitrato':
         return cleanNumber((well as any).nitrato);
       case 'profundidade':
-        return cleanNumber((well as any).nivel_piezometrico);
+        return cleanNumber((well as any).profundidade_nivel_agua);
       case 'precipitacao':
         return cleanNumber((well as any).precipitacao_dia_mm);
       default:
@@ -198,12 +198,13 @@ const Visual: React.FC = () => {
     const variableConfig = getVariableConfig(selectedVariable);
     
     Object.entries(data).forEach(([codigo, well]) => {
-      // Criar marcador com estilo igual ao visual.html
-      const marker = L.circleMarker(well.coord, {
-        radius: 6,
-        color: variableConfig.color,
-        fillColor: variableConfig.color,
-        fillOpacity: 0.8,
+      // Criar marcador personalizado com ícone
+      const marker = L.marker(well.coord, {
+        icon: L.AwesomeMarkers.icon({
+          icon: variableConfig.icon,
+          markerColor: variableConfig.color,
+          prefix: 'fa'
+        })
       });
       
       marker.addTo(markersLayerRef.current).on('click', () => {
