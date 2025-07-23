@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import proj4 from 'proj4';
 
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://placeholder.supabase.co';
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || 'placeholder-key';
@@ -9,6 +10,12 @@ const isSupabaseConfigured = supabaseUrl !== 'https://placeholder.supabase.co' &
 export const supabase = isSupabaseConfigured 
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
+
+// Definir o sistema de coordenadas português (igual ao visual.html)
+proj4.defs(
+  "ESRI:102164",
+  "+proj=tmerc +lat_0=39.66666666666666 +lon_0=-8.131906111111112 +k=1 +x_0=200000 +y_0=300000 +ellps=intl +units=m +no_defs"
+);
 
 // Tipos para os dados das tabelas
 export interface WellData {
@@ -43,16 +50,19 @@ export interface PrecipitationData extends WellData {
   nome: string;
 }
 
-// Função para converter coordenadas UTM para lat/lng
+// Função para converter coordenadas usando proj4js (igual ao visual.html)
 export const utmToLatLng = (x: number, y: number): [number, number] => {
-  // Esta é uma conversão simplificada - para produção, use uma biblioteca como proj4js
-  // Assumindo que as coordenadas estão em UTM zone 29N (Portugal)
-  
-  // Conversão aproximada para Portugal
-  const lat = 39.5 + (y - 500000) / 1000000;
-  const lng = -8.0 + (x - 500000) / 1000000;
-  
-  return [lat, lng];
+  try {
+    // Converter de ESRI:102164 (sistema português) para WGS84
+    const [lon, lat] = proj4("ESRI:102164", "WGS84", [x, y]);
+    return [lat, lon]; // Retornar como [lat, lng] para o Leaflet
+  } catch (error) {
+    console.error('Erro na conversão de coordenadas:', error);
+    // Fallback para conversão aproximada se proj4js falhar
+    const lat = 39.5 + (y - 500000) / 1000000;
+    const lng = -8.0 + (x - 500000) / 1000000;
+    return [lat, lng];
+  }
 };
 
 // Função para buscar dados por variável
