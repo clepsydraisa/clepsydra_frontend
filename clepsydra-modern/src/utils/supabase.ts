@@ -95,19 +95,26 @@ export const fetchWellData = async (
       throw new Error(`Variável não suportada: ${variable}`);
   }
   
+  console.log(`Query inicializada para tabela: ${variable}, tipo: ${typeof query}, métodos:`, Object.keys(query || {}));
+  
   // Aplicar filtro de sistema aquífero se especificado (apenas para variáveis que têm esta coluna)
   if (sistemaAquifero && sistemaAquifero !== 'todos' && variable !== 'precipitacao') {
-    // Mapear os códigos para os valores reais da base de dados
+    // Mapear os códigos para os valores reais da base de dados (baseado nos valores reais)
     const sistemaMap: { [key: string]: string } = {
-      'AL': 'T7 - ALUVIÕES DO TEJO',
-      'MD': 'T1 - BACIA DO TEJO-SADO / MARGEM DIREITA',
-      'ME': 'T3 - BACIA DO TEJO-SADO / MARGEM ESQUERDA'
+      'AL': 'T7-ALUVIÕES DO TEJO',
+      'MD': 'T1-BACIA DO TEJO-SADO / MARGEM DIREITA',
+      'ME': 'T3-BACIA DO TEJO-SADO / MARGEM ESQUERDA'
     };
     
     const sistemaReal = sistemaMap[sistemaAquifero];
     console.log(`Aplicando filtro sistema_aquifero: ${sistemaReal} para variável: ${variable}`);
-    if (sistemaReal) {
-      query = query.eq('sistema_aquifero', sistemaReal);
+    if (sistemaReal && query) {
+      try {
+        query = query.eq('sistema_aquifero', sistemaReal);
+        console.log('Filtro aplicado com sucesso');
+      } catch (error) {
+        console.error('Erro ao aplicar filtro:', error);
+      }
     }
   } else {
     console.log(`Não aplicando filtro sistema_aquifero. sistemaAquifero: ${sistemaAquifero}, variable: ${variable}`);
@@ -216,9 +223,9 @@ export const fetchWellHistory = async (
   // Aplicar filtro de sistema aquífero se especificado (apenas para variáveis que têm esta coluna)
   if (sistemaAquifero && sistemaAquifero !== 'todos' && variable !== 'precipitacao') {
     const sistemaMap: { [key: string]: string } = {
-      'AL': 'T7 - ALUVIÕES DO TEJO',
-      'MD': 'T1 - BACIA DO TEJO-SADO / MARGEM DIREITA',
-      'ME': 'T3 - BACIA DO TEJO-SADO / MARGEM ESQUERDA'
+      'AL': 'T7-ALUVIÕES DO TEJO',
+      'MD': 'T1-BACIA DO TEJO-SADO / MARGEM DIREITA',
+      'ME': 'T3-BACIA DO TEJO-SADO / MARGEM ESQUERDA'
     };
     
     const sistemaReal = sistemaMap[sistemaAquifero];

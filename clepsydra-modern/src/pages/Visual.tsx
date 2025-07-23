@@ -55,9 +55,9 @@ const Visual: React.FC = () => {
 
   const sistemasAquifero = [
     { value: 'todos', label: 'Todos' },
-    { value: 'AL', label: 'AL - T7-Aluviões do Tejo' },
-    { value: 'MD', label: 'MD - T1-Bacia do Tejo-Sado / Margem Direita' },
-    { value: 'ME', label: 'ME - T3-Bacia do Tejo-Sado / Margem Esquerda' }
+    { value: 'AL', label: 'Aluviões do Tejo' },
+    { value: 'MD', label: 'Margem Direita' },
+    { value: 'ME', label: 'Margem Esquerda' }
   ];
 
   useEffect(() => {
