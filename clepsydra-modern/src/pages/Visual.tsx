@@ -77,9 +77,12 @@ const Visual: React.FC = () => {
       
       const data = await fetchWellData(selectedVariable, 'todos');
       console.log(`Dados recebidos: ${data.length} registros`);
+      console.log('Primeiros 3 registros:', data.slice(0, 3));
       
       // Converter dados para o formato esperado
       const processedData: SampleDataType = {};
+      let validPoints = 0;
+      let invalidPoints = 0;
       
       data.forEach((well) => {
         const codigo = well.codigo;
@@ -87,6 +90,7 @@ const Visual: React.FC = () => {
         // Validar coordenadas
         if (!isValidCoordinate(well.coord_x_m) || !isValidCoordinate(well.coord_y_m)) {
           console.log(`Coordenadas inválidas para poço ${codigo}:`, well.coord_x_m, well.coord_y_m);
+          invalidPoints++;
           return; // Pular este poço
         }
         
@@ -96,6 +100,7 @@ const Visual: React.FC = () => {
         const value = getValueFromWell(well, selectedVariable);
         if (value === null) {
           console.log(`Valor inválido para poço ${codigo} e variável ${selectedVariable}:`, well);
+          invalidPoints++;
           return; // Pular este poço
         }
         
@@ -113,10 +118,19 @@ const Visual: React.FC = () => {
               value: value
             }]
           };
+          validPoints++;
         }
       });
       
-      console.log(`Dados processados: ${Object.keys(processedData[selectedVariable] || {}).length} poços únicos`);
+      console.log(`Dados processados: ${validPoints} pontos válidos, ${invalidPoints} pontos inválidos`);
+      console.log(`Poços únicos: ${Object.keys(processedData[selectedVariable] || {}).length}`);
+      
+      if (Object.keys(processedData[selectedVariable] || {}).length > 0) {
+        const firstWell = Object.values(processedData[selectedVariable])[0];
+        console.log('Exemplo de poço processado:', firstWell);
+        console.log('Dados do gráfico:', firstWell.chartData);
+      }
+      
       setWellData(processedData);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -239,14 +253,22 @@ const Visual: React.FC = () => {
     setModalTitle(`Poço ${codigo}`);
     setShowModal(true);
     
+    console.log(`Abrindo modal para poço ${codigo}`);
+    console.log('Dados do poço:', well);
+    
     // Carregar dados históricos do poço
     try {
       const historicalData = await fetchWellHistory(selectedVariable, codigo, 'todos');
+      console.log(`Dados históricos recebidos: ${historicalData.length} registros`);
+      console.log('Primeiros 3 registros históricos:', historicalData.slice(0, 3));
       
       const chartData = historicalData.map((record) => ({
         date: record.data,
         value: getValueFromWell(record, selectedVariable)
       }));
+      
+      console.log('Dados processados para gráfico:', chartData.slice(0, 5));
+      console.log('Total de pontos no gráfico:', chartData.length);
       
       // Atualizar os dados do poço com o histórico
       const updatedWell = {
