@@ -3,6 +3,8 @@ import { X } from 'lucide-react';
 import Chart from 'chart.js/auto';
 import 'chartjs-adapter-date-fns';
 import zoomPlugin from 'chartjs-plugin-zoom';
+import 'leaflet.awesome-markers/dist/leaflet.awesome-markers.css';
+import 'leaflet.awesome-markers/dist/leaflet.awesome-markers.js';
 
 // Registrar o plugin de zoom
 Chart.register(zoomPlugin);
@@ -39,12 +41,12 @@ const Visual: React.FC = () => {
   const chartRef = useRef<HTMLCanvasElement>(null);
 
   const variables = [
-    { value: 'profundidade', label: 'Profundidade' },
-    { value: 'nitrato', label: 'Nitratos' },
-    { value: 'precipitacao', label: 'Precipitação' },
-    { value: 'rega', label: 'Rega' },
-    { value: 'temperaturas', label: 'Temperaturas' },
-    { value: 'caudal', label: 'Caudal' }
+    { value: 'profundidade', label: 'Profundidade', icon: 'fa-tint', color: 'blue' },
+    { value: 'nitrato', label: 'Nitratos', icon: 'fa-flask', color: 'green' },
+    { value: 'precipitacao', label: 'Precipitação', icon: 'fa-cloud-rain', color: 'cyan' },
+    { value: 'rega', label: 'Rega', icon: 'fa-tint', color: 'blue' },
+    { value: 'temperaturas', label: 'Temperaturas', icon: 'fa-thermometer-half', color: 'red' },
+    { value: 'caudal', label: 'Caudal', icon: 'fa-water', color: 'blue' }
   ];
 
   // Dados de exemplo (simulando os dados do CSV)
@@ -119,21 +121,26 @@ const Visual: React.FC = () => {
     }
   };
 
+  const getVariableConfig = (variable: string) => {
+    return variables.find(v => v.value === variable) || variables[0];
+  };
+
   const updateMap = () => {
     clearMarkers();
     const data = sampleData[selectedVariable];
     if (!data) return;
 
     const L = (window as any).L;
+    const variableConfig = getVariableConfig(selectedVariable);
     
     Object.entries(data).forEach(([codigo, well]) => {
-      const color = selectedVariable === 'profundidade' ? '#007bff' : '#28a745';
-      
-      const marker = L.circleMarker(well.coord, {
-        radius: 6,
-        color: color,
-        fillColor: color,
-        fillOpacity: 0.8
+      // Criar marcador personalizado com ícone
+      const marker = L.marker(well.coord, {
+        icon: L.AwesomeMarkers.icon({
+          icon: variableConfig.icon,
+          markerColor: variableConfig.color,
+          prefix: 'fa'
+        })
       });
       
       marker.addTo(markersLayerRef.current).on('click', () => {
