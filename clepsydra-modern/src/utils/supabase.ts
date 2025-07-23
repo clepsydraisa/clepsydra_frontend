@@ -77,71 +77,74 @@ export const fetchWellData = async (
     return [];
   }
 
-  let query: any;
+  let tableName: string;
   
   switch (variable) {
     case 'condutividade':
-      query = supabase.from('condut_tejo_loc');
+      tableName = 'condut_tejo_loc';
       break;
     case 'nitrato':
-      query = supabase.from('nitrato_tejo_loc');
+      tableName = 'nitrato_tejo_loc';
       break;
     case 'profundidade':
-      query = supabase.from('piezo_tejo_loc');
+      tableName = 'piezo_tejo_loc';
       break;
     case 'precipitacao':
-      query = supabase.from('precipitacao_tejo_loc');
+      tableName = 'precipitacao_tejo_loc';
       break;
     default:
       throw new Error(`Variável não suportada: ${variable}`);
   }
   
-  console.log(`Query inicializada para tabela: ${variable}, tipo: ${typeof query}, métodos:`, Object.keys(query || {}));
+  console.log(`Iniciando query para tabela: ${tableName}`);
   
-  // Aplicar filtro de sistema aquífero se especificado (apenas para variáveis que têm esta coluna)
-  if (sistemaAquifero && sistemaAquifero !== 'todos' && variable !== 'precipitacao') {
-    console.log(`Aplicando filtro sistema_aquifero: ${sistemaAquifero} para variável: ${variable}`);
-    if (query) {
-      try {
-        query = query.eq('sistema_aquifero', sistemaAquifero);
-        console.log('Filtro aplicado com sucesso');
-      } catch (error) {
-        console.error('Erro ao aplicar filtro:', error);
+  try {
+    // Inicializar query corretamente
+    let query = supabase.from(tableName).select('*');
+    
+    // Aplicar filtro de sistema aquífero se especificado (apenas para variáveis que têm esta coluna)
+    if (sistemaAquifero && sistemaAquifero !== 'todos' && variable !== 'precipitacao') {
+      console.log(`Aplicando filtro sistema_aquifero: ${sistemaAquifero} para variável: ${variable}`);
+      query = query.eq('sistema_aquifero', sistemaAquifero);
+      console.log('Filtro aplicado com sucesso');
+    } else {
+      console.log(`Não aplicando filtro sistema_aquifero. sistemaAquifero: ${sistemaAquifero}, variable: ${variable}`);
+    }
+    
+    // Buscar todos os dados usando paginação
+    let allData: WellData[] = [];
+    let page = 0;
+    const pageSize = 1000;
+    
+    while (true) {
+      const { data, error } = await query
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+      
+      if (error) {
+        console.error('Erro ao buscar dados:', error);
+        throw error;
       }
+      
+      if (!data || data.length === 0) {
+        break; // Não há mais dados
+      }
+      
+      allData = allData.concat(data);
+      
+      if (data.length < pageSize) {
+        break; // Última página
+      }
+      
+      page++;
     }
-  } else {
-    console.log(`Não aplicando filtro sistema_aquifero. sistemaAquifero: ${sistemaAquifero}, variable: ${variable}`);
+    
+    console.log(`Query concluída. Total de registros: ${allData.length}`);
+    return allData;
+    
+  } catch (error) {
+    console.error('Erro na função fetchWellData:', error);
+    return [];
   }
-  
-  // Buscar todos os dados usando paginação
-  let allData: WellData[] = [];
-  let page = 0;
-  const pageSize = 1000;
-  
-  while (true) {
-    const { data, error } = await query
-      .select('*')
-      .range(page * pageSize, (page + 1) * pageSize - 1);
-    
-    if (error) {
-      console.error('Erro ao buscar dados:', error);
-      throw error;
-    }
-    
-    if (!data || data.length === 0) {
-      break; // Não há mais dados
-    }
-    
-    allData = allData.concat(data);
-    
-    if (data.length < pageSize) {
-      break; // Última página
-    }
-    
-    page++;
-  }
-  
-  return allData;
 };
 
 // Função para verificar valores únicos na coluna sistema_aquifero
