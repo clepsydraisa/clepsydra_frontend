@@ -95,13 +95,13 @@ export const fetchWellData = async (
       throw new Error(`Variável não suportada: ${variable}`);
   }
   
-  // Aplicar filtro de sistema aquífero se especificado
-  if (sistemaAquifero && sistemaAquifero !== 'todos') {
+  // Aplicar filtro de sistema aquífero se especificado (apenas para variáveis que têm esta coluna)
+  if (sistemaAquifero && sistemaAquifero !== 'todos' && variable !== 'precipitacao') {
     // Mapear os códigos para os valores reais da base de dados
     const sistemaMap: { [key: string]: string } = {
-      'AL': 'T7-ALUVIÕES DO TEJO',
-      'MD': 'T1-BACIA DO TEJO-SADO / MARG',
-      'ME': 'T3-BACIA DO TEJO-SADO / MARG'
+      'AL': 'T7 - ALUVIÕES DO TEJO',
+      'MD': 'T1 - BACIA DO TEJO-SADO / MARGEM DIREITA',
+      'ME': 'T3 - BACIA DO TEJO-SADO / MARGEM ESQUERDA'
     };
     
     const sistemaReal = sistemaMap[sistemaAquifero];
@@ -175,12 +175,12 @@ export const fetchWellHistory = async (
   // Filtrar por código do poço
   query = query.eq('codigo', codigo);
   
-  // Aplicar filtro de sistema aquífero se especificado
-  if (sistemaAquifero && sistemaAquifero !== 'todos') {
+  // Aplicar filtro de sistema aquífero se especificado (apenas para variáveis que têm esta coluna)
+  if (sistemaAquifero && sistemaAquifero !== 'todos' && variable !== 'precipitacao') {
     const sistemaMap: { [key: string]: string } = {
-      'AL': 'T7-ALUVIÕES DO TEJO',
-      'MD': 'T1-BACIA DO TEJO-SADO / MARG',
-      'ME': 'T3-BACIA DO TEJO-SADO / MARG'
+      'AL': 'T7 - ALUVIÕES DO TEJO',
+      'MD': 'T1 - BACIA DO TEJO-SADO / MARGEM DIREITA',
+      'ME': 'T3 - BACIA DO TEJO-SADO / MARGEM ESQUERDA'
     };
     
     const sistemaReal = sistemaMap[sistemaAquifero];

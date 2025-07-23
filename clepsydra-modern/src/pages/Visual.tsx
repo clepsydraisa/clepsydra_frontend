@@ -188,7 +188,7 @@ const Visual: React.FC = () => {
     if (!data) return;
     
     const codes = Object.keys(data);
-    // Aqui você pode atualizar as opções do select se necessário
+    console.log(`Encontrados ${codes.length} pontos para ${selectedVariable} com filtro ${selectedSistemaAquifero}`);
   };
 
   const openChartModal = async (codigo: string, well: WellDataWithChart) => {
@@ -468,7 +468,7 @@ const Visual: React.FC = () => {
         )}
 
         {/* Mensagem quando não há dados */}
-        {!loading && Object.keys(wellData).length === 0 && (
+        {!loading && (!wellData[selectedVariable] || Object.keys(wellData[selectedVariable] || {}).length === 0) && (
           <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div className="flex items-center space-x-2">
               <div className="text-yellow-600">⚠️</div>
