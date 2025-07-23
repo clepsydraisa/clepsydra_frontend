@@ -1,9 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || 'placeholder-key';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Verificar se as variáveis de ambiente estão configuradas
+const isSupabaseConfigured = supabaseUrl !== 'https://placeholder.supabase.co' && supabaseAnonKey !== 'placeholder-key';
+
+export const supabase = isSupabaseConfigured 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 // Tipos para os dados das tabelas
 export interface WellData {
@@ -42,8 +47,6 @@ export interface PrecipitationData extends WellData {
 export const utmToLatLng = (x: number, y: number): [number, number] => {
   // Esta é uma conversão simplificada - para produção, use uma biblioteca como proj4js
   // Assumindo que as coordenadas estão em UTM zone 29N (Portugal)
-  const zone = 29;
-  const northern = true;
   
   // Conversão aproximada para Portugal
   const lat = 39.5 + (y - 500000) / 1000000;
@@ -57,6 +60,12 @@ export const fetchWellData = async (
   variable: string,
   sistemaAquifero?: string
 ): Promise<WellData[]> => {
+  // Se o Supabase não estiver configurado, retornar array vazio
+  if (!supabase) {
+    console.warn('Supabase não configurado. Configure as variáveis de ambiente REACT_APP_SUPABASE_URL e REACT_APP_SUPABASE_ANON_KEY');
+    return [];
+  }
+
   let query: any;
   
   switch (variable) {
@@ -78,13 +87,84 @@ export const fetchWellData = async (
   
   // Aplicar filtro de sistema aquífero se especificado
   if (sistemaAquifero && sistemaAquifero !== 'todos') {
-    query = query.eq('sistema_aquifero', sistemaAquifero);
+    // Mapear os códigos para os valores reais da base de dados
+    const sistemaMap: { [key: string]: string } = {
+      'AL': 'T7 - ALUVIÕES DO TEJO',
+      'MD': 'T1 - BACIA DO TEJO-SADO / MARGEM DIREITA',
+      'ME': 'T3 - BACIA DO TEJO-SADO / MARGEM ESQUERDA'
+    };
+    
+    const sistemaReal = sistemaMap[sistemaAquifero];
+    if (sistemaReal) {
+      query = query.eq('sistema_aquifero', sistemaReal);
+    }
   }
   
   const { data, error } = await query.select('*');
   
   if (error) {
     console.error('Erro ao buscar dados:', error);
+    throw error;
+  }
+  
+  return data || [];
+};
+
+// Função para buscar dados históricos de um poço específico
+export const fetchWellHistory = async (
+  variable: string,
+  codigo: string,
+  sistemaAquifero?: string
+): Promise<WellData[]> => {
+  // Se o Supabase não estiver configurado, retornar array vazio
+  if (!supabase) {
+    console.warn('Supabase não configurado. Configure as variáveis de ambiente REACT_APP_SUPABASE_URL e REACT_APP_SUPABASE_ANON_KEY');
+    return [];
+  }
+
+  let query: any;
+  
+  switch (variable) {
+    case 'profundidade':
+      query = supabase.from('piezo_tejo_loc');
+      break;
+    case 'condutividade':
+      query = supabase.from('condut_tejo_loc');
+      break;
+    case 'nitrato':
+      query = supabase.from('nitrato_tejo_loc');
+      break;
+    case 'precipitacao':
+      query = supabase.from('precipitacao_tejo_loc');
+      break;
+    default:
+      throw new Error(`Variável não suportada: ${variable}`);
+  }
+  
+  // Filtrar por código do poço
+  query = query.eq('codigo', codigo);
+  
+  // Aplicar filtro de sistema aquífero se especificado
+  if (sistemaAquifero && sistemaAquifero !== 'todos') {
+    const sistemaMap: { [key: string]: string } = {
+      'AL': 'T7 - ALUVIÕES DO TEJO',
+      'MD': 'T1 - BACIA DO TEJO-SADO / MARGEM DIREITA',
+      'ME': 'T3 - BACIA DO TEJO-SADO / MARGEM ESQUERDA'
+    };
+    
+    const sistemaReal = sistemaMap[sistemaAquifero];
+    if (sistemaReal) {
+      query = query.eq('sistema_aquifero', sistemaReal);
+    }
+  }
+  
+  // Ordenar por data
+  query = query.order('data', { ascending: true });
+  
+  const { data, error } = await query.select('*');
+  
+  if (error) {
+    console.error('Erro ao buscar histórico do poço:', error);
     throw error;
   }
   

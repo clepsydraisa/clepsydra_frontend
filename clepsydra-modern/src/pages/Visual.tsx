@@ -5,7 +5,7 @@ import 'chartjs-adapter-date-fns';
 import zoomPlugin from 'chartjs-plugin-zoom';
 import 'leaflet.awesome-markers/dist/leaflet.awesome-markers.css';
 import 'leaflet.awesome-markers/dist/leaflet.awesome-markers.js';
-import { fetchWellData, utmToLatLng, WellData } from '../utils/supabase';
+import { fetchWellData, fetchWellHistory, utmToLatLng, WellData } from '../utils/supabase';
 
 // Registrar o plugin de zoom
 Chart.register(zoomPlugin);
@@ -55,9 +55,9 @@ const Visual: React.FC = () => {
 
   const sistemasAquifero = [
     { value: 'todos', label: 'Todos' },
-    { value: 'AL', label: 'AL - Aluviões' },
-    { value: 'ME', label: 'ME - Margem Esquerda' },
-    { value: 'MD', label: 'MD - Margem Direita' }
+    { value: 'AL', label: 'AL - T7 - Aluviões do Tejo' },
+    { value: 'MD', label: 'MD - T1 - Margem Direita' },
+    { value: 'ME', label: 'ME - T3 - Margem Esquerda' }
   ];
 
   useEffect(() => {
@@ -96,21 +96,24 @@ const Visual: React.FC = () => {
           processedData[selectedVariable] = {};
         }
         
-        processedData[selectedVariable][codigo] = {
-          ...well,
-          coord: [lat, lng],
-          chartData: [{
-            date: well.data,
-            value: getValueFromWell(well, selectedVariable)
-          }]
-        };
+        // Se já existe um poço com este código, não duplicar
+        if (!processedData[selectedVariable][codigo]) {
+          processedData[selectedVariable][codigo] = {
+            ...well,
+            coord: [lat, lng],
+            chartData: [{
+              date: well.data,
+              value: getValueFromWell(well, selectedVariable)
+            }]
+          };
+        }
       });
       
       setWellData(processedData);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
-      // Fallback para dados de exemplo se houver erro
-      setWellData(getSampleData());
+      // Se houver erro, mostrar array vazio em vez de dados de teste
+      setWellData({});
     } finally {
       setLoading(false);
     }
@@ -123,7 +126,7 @@ const Visual: React.FC = () => {
       case 'nitrato':
         return parseFloat((well as any).nitrato) || 0;
       case 'profundidade':
-        return parseFloat((well as any).profundidade_nivel_piezometrico) || 0;
+        return parseFloat((well as any).nivel_piezometrico) || 0;
       case 'precipitacao':
         return (well as any).precipitacao_dia_mm || 0;
       default:
@@ -131,44 +134,7 @@ const Visual: React.FC = () => {
     }
   };
 
-  const getSampleData = (): SampleDataType => {
-    return {
-      profundidade: {
-        '377/001': {
-          id: 1,
-          data: '2020-01-01',
-          codigo: '377/001',
-          coord_x_m: 500000,
-          coord_y_m: 5000000,
-          coord: [39.5, -8.0],
-          created_at: '2020-01-01',
-          chartData: [
-            { date: '2020-01-01', value: 45.2 },
-            { date: '2020-06-01', value: 42.1 },
-            { date: '2021-01-01', value: 47.8 },
-            { date: '2021-06-01', value: 44.3 },
-            { date: '2022-01-01', value: 49.1 }
-          ]
-        },
-        '377/002': {
-          id: 2,
-          data: '2020-01-01',
-          codigo: '377/002',
-          coord_x_m: 500000,
-          coord_y_m: 5000000,
-          coord: [39.3, -8.2],
-          created_at: '2020-01-01',
-          chartData: [
-            { date: '2020-01-01', value: 38.5 },
-            { date: '2020-06-01', value: 35.2 },
-            { date: '2021-01-01', value: 41.7 },
-            { date: '2021-06-01', value: 37.9 },
-            { date: '2022-01-01', value: 43.2 }
-          ]
-        }
-      }
-    };
-  };
+
 
   const initMap = () => {
     if (mapRef.current) return;
@@ -225,16 +191,40 @@ const Visual: React.FC = () => {
     // Aqui você pode atualizar as opções do select se necessário
   };
 
-  const openChartModal = (codigo: string, well: WellDataWithChart) => {
+  const openChartModal = async (codigo: string, well: WellDataWithChart) => {
     setModalTitle(`Poço ${codigo}`);
     setShowModal(true);
     
-    // Simular carregamento do gráfico
-    setTimeout(() => {
-      if (chartRef.current) {
-        createChart(codigo, well);
-      }
-    }, 100);
+    // Carregar dados históricos do poço
+    try {
+      const historicalData = await fetchWellHistory(selectedVariable, codigo, selectedSistemaAquifero);
+      
+      const chartData = historicalData.map((record) => ({
+        date: record.data,
+        value: getValueFromWell(record, selectedVariable)
+      }));
+      
+      // Atualizar os dados do poço com o histórico
+      const updatedWell = {
+        ...well,
+        chartData: chartData
+      };
+      
+      // Simular carregamento do gráfico
+      setTimeout(() => {
+        if (chartRef.current) {
+          createChart(codigo, updatedWell);
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Erro ao carregar histórico:', error);
+      // Usar dados existentes se houver erro
+      setTimeout(() => {
+        if (chartRef.current) {
+          createChart(codigo, well);
+        }
+      }, 100);
+    }
   };
 
   const createChart = (codigo: string, well: WellDataWithChart) => {
@@ -263,7 +253,9 @@ const Visual: React.FC = () => {
           backgroundColor: getColorForVariable(selectedVariable, 0.2),
           fill: selectedVariable === 'profundidade' ? 'start' : false,
           tension: 0.2,
-          showLine: selectedVariable !== 'profundidade'
+          showLine: selectedVariable !== 'profundidade',
+          pointRadius: 3,
+          pointHoverRadius: 6
         }]
       },
       options: {
@@ -273,17 +265,30 @@ const Visual: React.FC = () => {
             type: 'time',
             time: {
               unit: 'year',
-              tooltipFormat: 'yyyy-MM-dd'
+              tooltipFormat: 'yyyy-MM-dd',
+              displayFormats: {
+                year: 'yyyy',
+                month: 'yyyy-MM',
+                day: 'yyyy-MM-dd'
+              }
             },
-            title: { display: true, text: 'Data' }
+            title: { display: true, text: 'Data' },
+            ticks: {
+              maxTicksLimit: 10
+            }
           },
           y: {
             title: { 
               display: true, 
               text: `${variableConfig.label} (${getUnit(selectedVariable)})`
             },
-            reverse: selectedVariable === 'profundidade',
-            min: 0
+            reverse: selectedVariable === 'profundidade', // Eixo Y invertido para profundidade
+            min: 0,
+            ticks: {
+              callback: function(value) {
+                return value + ' ' + getUnit(selectedVariable);
+              }
+            }
           }
         },
         plugins: {
@@ -293,6 +298,17 @@ const Visual: React.FC = () => {
               mode: 'x',
               drag: { enabled: true },
               wheel: { enabled: true }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              title: function(context) {
+                const date = new Date(context[0].parsed.x);
+                return date.toLocaleDateString('pt-BR');
+              },
+              label: function(context) {
+                return `${variableConfig.label}: ${context.parsed.y} ${getUnit(selectedVariable)}`;
+              }
             }
           }
         }
@@ -401,7 +417,7 @@ const Visual: React.FC = () => {
               id="sistemaAquiferoFilter"
               value={selectedSistemaAquifero}
               onChange={(e) => setSelectedSistemaAquifero(e.target.value)}
-              className="border border-blue-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 min-w-[160px] appearance-none bg-white bg-no-repeat bg-right pr-8"
+              className="border border-blue-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 min-w-[200px] appearance-none bg-white bg-no-repeat bg-right pr-8"
               style={{
                 backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
                 backgroundPosition: 'right 0.5rem center',
@@ -447,6 +463,23 @@ const Visual: React.FC = () => {
             <div className="flex items-center space-x-2">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
               <span className="text-blue-800">Carregando dados...</span>
+            </div>
+          </div>
+        )}
+
+        {/* Mensagem quando não há dados */}
+        {!loading && Object.keys(wellData).length === 0 && (
+          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <div className="text-yellow-600">⚠️</div>
+              <div className="text-yellow-800">
+                <strong>Nenhum dado encontrado.</strong> 
+                {!process.env.REACT_APP_SUPABASE_URL ? (
+                  <span> Configure as variáveis de ambiente REACT_APP_SUPABASE_URL e REACT_APP_SUPABASE_ANON_KEY para conectar à base de dados.</span>
+                ) : (
+                  <span> Verifique se existem dados na tabela correspondente para os filtros selecionados.</span>
+                )}
+              </div>
             </div>
           </div>
         )}
