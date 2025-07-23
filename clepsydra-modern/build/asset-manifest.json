@@ -1,0 +1,43 @@
+{
+  "files": {
+    "main.css": "/clepsydra_frontend/static/css/main.74850c2d.css",
+    "main.js": "/clepsydra_frontend/static/js/main.1010d7a0.js",
+    "static/js/453.2ddcdf35.chunk.js": "/clepsydra_frontend/static/js/453.2ddcdf35.chunk.js",
+    "static/media/10.jpg": "/clepsydra_frontend/static/media/10.196641fb0e8dbbd837f2.jpg",
+    "static/media/pt5_bg.png": "/clepsydra_frontend/static/media/pt5_bg.1e20327d52d19dc75a86.png",
+    "static/media/myirrigation.png": "/clepsydra_frontend/static/media/myirrigation.d644aeffe0f38235ffd6.png",
+    "static/media/9.jpg": "/clepsydra_frontend/static/media/9.2206e96996355be04cdb.jpg",
+    "static/media/12.jpg": "/clepsydra_frontend/static/media/12.91855aaeed0429a77474.jpg",
+    "static/media/16.jpg": "/clepsydra_frontend/static/media/16.7ddeae27cba7ea1b480a.jpg",
+    "static/media/2.JPG": "/clepsydra_frontend/static/media/2.ae03c80a05f6a311bed9.JPG",
+    "static/media/15.jpg": "/clepsydra_frontend/static/media/15.e9b2d54659ae280dbba6.jpg",
+    "static/media/7.jpg": "/clepsydra_frontend/static/media/7.1f81449499f8710e0051.jpg",
+    "static/media/14.jpg": "/clepsydra_frontend/static/media/14.5cfa04e5dcce8addfa55.jpg",
+    "static/media/13.jpg": "/clepsydra_frontend/static/media/13.9b5ab4b8889a23628db1.jpg",
+    "static/media/6.jpg": "/clepsydra_frontend/static/media/6.962773b26582369bd69c.jpg",
+    "static/media/3.JPG": "/clepsydra_frontend/static/media/3.08b34a46814236f210ea.JPG",
+    "static/media/logo_footer_c.png": "/clepsydra_frontend/static/media/logo_footer_c.35571ae919334e9c2fef.png",
+    "static/media/8.jpg": "/clepsydra_frontend/static/media/8.932b191769aef314d2c5.jpg",
+    "static/media/markers-soft@2x.png": "/clepsydra_frontend/static/media/markers-soft@2x.1f2cc17911c8d4a3fa01.png",
+    "static/media/irrocloud.png": "/clepsydra_frontend/static/media/irrocloud.f03824cd8060648485ab.png",
+    "static/media/europa_clep.png": "/clepsydra_frontend/static/media/europa_clep.8e267f2cacc2e8611b56.png",
+    "static/media/lusofona_lg.png": "/clepsydra_frontend/static/media/lusofona_lg.6effabb13bc76eb17241.png",
+    "static/media/db_poster_rm.png": "/clepsydra_frontend/static/media/db_poster_rm.f951c6c77bdb9abd8772.png",
+    "static/media/apa_lg.png": "/clepsydra_frontend/static/media/apa_lg.af50bb875f20e0842f37.png",
+    "static/media/markers-soft.png": "/clepsydra_frontend/static/media/markers-soft.e52214306ad12a5c837e.png",
+    "static/media/logo_c.png": "/clepsydra_frontend/static/media/logo_c.57a1a7b438a37d3f32c8.png",
+    "static/media/logo_c2.png": "/clepsydra_frontend/static/media/logo_c2.391898b43505722f302c.png",
+    "static/media/logo-path4med-1.svg": "/clepsydra_frontend/static/media/logo-path4med-1.ab96549ad59b5b27446a0ea59c1fb5ef.svg",
+    "static/media/quintacholda_lg.png": "/clepsydra_frontend/static/media/quintacholda_lg.0361419c0fee327efd67.png",
+    "static/media/ar_lg.png": "/clepsydra_frontend/static/media/ar_lg.53e104d32890b0c97ee5.png",
+    "static/media/arbvs_lg.jpg": "/clepsydra_frontend/static/media/arbvs_lg.c5f94f914939c270074d.jpg",
+    "index.html": "/clepsydra_frontend/index.html",
+    "main.74850c2d.css.map": "/clepsydra_frontend/static/css/main.74850c2d.css.map",
+    "main.1010d7a0.js.map": "/clepsydra_frontend/static/js/main.1010d7a0.js.map",
+    "453.2ddcdf35.chunk.js.map": "/clepsydra_frontend/static/js/453.2ddcdf35.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.74850c2d.css",
+    "static/js/main.1010d7a0.js"
+  ]
+}
