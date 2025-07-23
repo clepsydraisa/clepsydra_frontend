@@ -5,7 +5,7 @@ import 'chartjs-adapter-date-fns';
 import zoomPlugin from 'chartjs-plugin-zoom';
 import 'leaflet.awesome-markers/dist/leaflet.awesome-markers.css';
 import 'leaflet.awesome-markers/dist/leaflet.awesome-markers.js';
-import { fetchWellData, fetchWellHistory, utmToLatLng, WellData } from '../utils/supabase';
+import { fetchWellData, fetchWellHistory, utmToLatLng, WellData, checkSistemaAquiferoValues } from '../utils/supabase';
 
 // Registrar o plugin de zoom
 Chart.register(zoomPlugin);
@@ -83,7 +83,15 @@ const Visual: React.FC = () => {
   const loadWellData = async () => {
     setLoading(true);
     try {
+      console.log(`Carregando dados para: ${selectedVariable}, Sistema: ${selectedSistemaAquifero}`);
+      
+      // Verificar valores únicos na coluna sistema_aquifero para debug
+      if (selectedVariable !== 'precipitacao') {
+        await checkSistemaAquiferoValues(selectedVariable);
+      }
+      
       const data = await fetchWellData(selectedVariable, selectedSistemaAquifero);
+      console.log(`Dados recebidos: ${data.length} registros`);
       
       // Converter dados para o formato esperado
       const processedData: SampleDataType = {};
@@ -109,6 +117,7 @@ const Visual: React.FC = () => {
         }
       });
       
+      console.log(`Dados processados: ${Object.keys(processedData[selectedVariable] || {}).length} poços únicos`);
       setWellData(processedData);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);

@@ -105,9 +105,12 @@ export const fetchWellData = async (
     };
     
     const sistemaReal = sistemaMap[sistemaAquifero];
+    console.log(`Aplicando filtro sistema_aquifero: ${sistemaReal} para variável: ${variable}`);
     if (sistemaReal) {
       query = query.eq('sistema_aquifero', sistemaReal);
     }
+  } else {
+    console.log(`Não aplicando filtro sistema_aquifero. sistemaAquifero: ${sistemaAquifero}, variable: ${variable}`);
   }
   
   // Buscar todos os dados usando paginação
@@ -139,6 +142,41 @@ export const fetchWellData = async (
   }
   
   return allData;
+};
+
+// Função para verificar valores únicos na coluna sistema_aquifero
+export const checkSistemaAquiferoValues = async (variable: string): Promise<string[]> => {
+  if (!supabase) {
+    console.warn('Supabase não configurado');
+    return [];
+  }
+
+  let query: any;
+  
+  switch (variable) {
+    case 'condutividade':
+      query = supabase.from('condut_tejo_loc');
+      break;
+    case 'nitrato':
+      query = supabase.from('nitrato_tejo_loc');
+      break;
+    case 'profundidade':
+      query = supabase.from('piezo_tejo_loc');
+      break;
+    default:
+      return [];
+  }
+  
+  const { data, error } = await query.select('sistema_aquifero');
+  
+  if (error) {
+    console.error('Erro ao verificar valores sistema_aquifero:', error);
+    return [];
+  }
+  
+  const uniqueValues = Array.from(new Set(data.map((row: any) => row.sistema_aquifero).filter(Boolean))) as string[];
+  console.log(`Valores únicos em sistema_aquifero para ${variable}:`, uniqueValues);
+  return uniqueValues;
 };
 
 // Função para buscar dados históricos de um poço específico
