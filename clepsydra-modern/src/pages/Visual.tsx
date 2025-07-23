@@ -5,7 +5,7 @@ import 'chartjs-adapter-date-fns';
 import zoomPlugin from 'chartjs-plugin-zoom';
 import 'leaflet.awesome-markers/dist/leaflet.awesome-markers.css';
 import 'leaflet.awesome-markers/dist/leaflet.awesome-markers.js';
-import { fetchWellData, fetchWellHistory, utmToLatLng, WellData, checkSistemaAquiferoValues } from '../utils/supabase';
+import { fetchWellData, fetchWellHistory, utmToLatLng, WellData } from '../utils/supabase';
 
 // Registrar o plugin de zoom
 Chart.register(zoomPlugin);
@@ -14,7 +14,7 @@ interface WellDataWithChart extends WellData {
   coord?: [number, number];
   chartData?: Array<{
     date: string;
-    value: number;
+    value: number | null;
   }>;
 }
 
@@ -27,12 +27,9 @@ interface SampleDataType {
 const Visual: React.FC = () => {
   const [selectedVariable, setSelectedVariable] = useState('profundidade');
   const [selectedPoint, setSelectedPoint] = useState('');
-  const [selectedSistemaAquifero, setSelectedSistemaAquifero] = useState('todos');
-  const [showInfo, setShowInfo] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [showTrendAnalysis, setShowTrendAnalysis] = useState(false);
-  const [trendData, setTrendData] = useState<any>(null);
   const [currentChart, setCurrentChart] = useState<Chart | null>(null);
   const [infoVisible, setInfoVisible] = useState(false);
   const [infoTableData, setInfoTableData] = useState<any>(null);
@@ -44,20 +41,13 @@ const Visual: React.FC = () => {
   const chartRef = useRef<HTMLCanvasElement>(null);
 
   const variables = [
-    { value: 'profundidade', label: 'Profundidade', icon: 'fa-tint', color: 'blue' },
-    { value: 'nitrato', label: 'Nitratos', icon: 'fa-flask', color: 'green' },
-    { value: 'condutividade', label: 'Condutividade', icon: 'fa-bolt', color: 'yellow' },
-    { value: 'precipitacao', label: 'Precipitação', icon: 'fa-cloud-rain', color: 'cyan' },
-    { value: 'rega', label: 'Rega', icon: 'fa-tint', color: 'blue' },
-    { value: 'temperaturas', label: 'Temperaturas', icon: 'fa-thermometer-half', color: 'red' },
-    { value: 'caudal', label: 'Caudal', icon: 'fa-water', color: 'blue' }
-  ];
-
-  const sistemasAquifero = [
-    { value: 'todos', label: 'Todos' },
-    { value: 'AL', label: 'Aluviões do Tejo' },
-    { value: 'MD', label: 'Margem Direita' },
-    { value: 'ME', label: 'Margem Esquerda' }
+    { value: 'profundidade', label: 'Profundidade', color: '#007bff' },
+    { value: 'nitrato', label: 'Nitratos', color: '#28a745' },
+    { value: 'condutividade', label: 'Condutividade', color: '#ffc107' },
+    { value: 'precipitacao', label: 'Precipitação', color: '#800080' },
+    { value: 'rega', label: 'Rega', color: '#ff6b1f' },
+    { value: 'temperaturas', label: 'Temperaturas', color: '#dc3545' },
+    { value: 'caudal', label: 'Caudal', color: '#17a2b8' }
   ];
 
   useEffect(() => {
@@ -68,9 +58,9 @@ const Visual: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Carregar dados quando variável ou sistema aquífero mudar
+    // Carregar dados quando variável mudar
     loadWellData();
-  }, [selectedVariable, selectedSistemaAquifero]);
+  }, [selectedVariable]);
 
   useEffect(() => {
     // Atualizar mapa quando os dados mudarem
@@ -83,14 +73,9 @@ const Visual: React.FC = () => {
   const loadWellData = async () => {
     setLoading(true);
     try {
-      console.log(`Carregando dados para: ${selectedVariable}, Sistema: ${selectedSistemaAquifero}`);
+      console.log(`Carregando dados para: ${selectedVariable}`);
       
-      // Verificar valores únicos na coluna sistema_aquifero para debug
-      if (selectedVariable !== 'precipitacao') {
-        await checkSistemaAquiferoValues(selectedVariable);
-      }
-      
-      const data = await fetchWellData(selectedVariable, selectedSistemaAquifero);
+      const data = await fetchWellData(selectedVariable, 'todos');
       console.log(`Dados recebidos: ${data.length} registros`);
       
       // Converter dados para o formato esperado
@@ -98,7 +83,21 @@ const Visual: React.FC = () => {
       
       data.forEach((well) => {
         const codigo = well.codigo;
+        
+        // Validar coordenadas
+        if (!isValidCoordinate(well.coord_x_m) || !isValidCoordinate(well.coord_y_m)) {
+          console.log(`Coordenadas inválidas para poço ${codigo}:`, well.coord_x_m, well.coord_y_m);
+          return; // Pular este poço
+        }
+        
         const [lat, lng] = utmToLatLng(well.coord_x_m, well.coord_y_m);
+        
+        // Validar valor da variável
+        const value = getValueFromWell(well, selectedVariable);
+        if (value === null) {
+          console.log(`Valor inválido para poço ${codigo} e variável ${selectedVariable}:`, well);
+          return; // Pular este poço
+        }
         
         if (!processedData[selectedVariable]) {
           processedData[selectedVariable] = {};
@@ -111,7 +110,7 @@ const Visual: React.FC = () => {
             coord: [lat, lng],
             chartData: [{
               date: well.data,
-              value: getValueFromWell(well, selectedVariable)
+              value: value
             }]
           };
         }
@@ -121,29 +120,51 @@ const Visual: React.FC = () => {
       setWellData(processedData);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
-      // Se houver erro, mostrar array vazio em vez de dados de teste
       setWellData({});
     } finally {
       setLoading(false);
     }
   };
 
-  const getValueFromWell = (well: WellData, variable: string): number => {
-    switch (variable) {
-      case 'condutividade':
-        return (well as any).condutividade || 0;
-      case 'nitrato':
-        return parseFloat((well as any).nitrato) || 0;
-      case 'profundidade':
-        return parseFloat((well as any).nivel_piezometrico) || 0;
-      case 'precipitacao':
-        return (well as any).precipitacao_dia_mm || 0;
-      default:
-        return 0;
+  // Função para limpar e validar valores numéricos
+  const cleanNumber = (value: string | number | null | undefined): number | null => {
+    if (value === null || value === undefined) return null;
+    
+    if (typeof value === 'string') {
+      // Remove caracteres especiais, espaços, <, (, ), etc
+      const cleaned = value.replace(/[<>()]/g, '').trim();
+      if (cleaned === '') return null;
+      
+      const num = parseFloat(cleaned);
+      return isNaN(num) ? null : num;
     }
+    
+    if (typeof value === 'number') {
+      return isNaN(value) ? null : value;
+    }
+    
+    return null;
   };
 
+  // Função para validar coordenadas
+  const isValidCoordinate = (coord: number | null | undefined): boolean => {
+    return coord !== null && coord !== undefined && !isNaN(coord) && coord !== 0;
+  };
 
+  const getValueFromWell = (well: WellData, variable: string): number | null => {
+    switch (variable) {
+      case 'condutividade':
+        return cleanNumber((well as any).condutividade);
+      case 'nitrato':
+        return cleanNumber((well as any).nitrato);
+      case 'profundidade':
+        return cleanNumber((well as any).nivel_piezometrico);
+      case 'precipitacao':
+        return cleanNumber((well as any).precipitacao_dia_mm);
+      default:
+        return null;
+    }
+  };
 
   const initMap = () => {
     if (mapRef.current) return;
@@ -177,13 +198,12 @@ const Visual: React.FC = () => {
     const variableConfig = getVariableConfig(selectedVariable);
     
     Object.entries(data).forEach(([codigo, well]) => {
-      // Criar marcador personalizado com ícone
-      const marker = L.marker(well.coord, {
-        icon: L.AwesomeMarkers.icon({
-          icon: variableConfig.icon,
-          markerColor: variableConfig.color,
-          prefix: 'fa'
-        })
+      // Criar marcador com estilo igual ao visual.html
+      const marker = L.circleMarker(well.coord, {
+        radius: 6,
+        color: variableConfig.color,
+        fillColor: variableConfig.color,
+        fillOpacity: 0.8,
       });
       
       marker.addTo(markersLayerRef.current).on('click', () => {
@@ -197,7 +217,20 @@ const Visual: React.FC = () => {
     if (!data) return;
     
     const codes = Object.keys(data);
-    console.log(`Encontrados ${codes.length} pontos para ${selectedVariable} com filtro ${selectedSistemaAquifero}`);
+    console.log(`Encontrados ${codes.length} pontos para ${selectedVariable}`);
+  };
+
+  const focusOnWell = (codigo: string) => {
+    const data = wellData[selectedVariable];
+    if (!data || !data[codigo] || !mapRef.current) return;
+    
+    const well = data[codigo];
+    
+    // Zoom para o ponto selecionado
+    mapRef.current.setView(well.coord, 14);
+    
+    // Abrir modal do gráfico
+    openChartModal(codigo, well);
   };
 
   const openChartModal = async (codigo: string, well: WellDataWithChart) => {
@@ -206,7 +239,7 @@ const Visual: React.FC = () => {
     
     // Carregar dados históricos do poço
     try {
-      const historicalData = await fetchWellHistory(selectedVariable, codigo, selectedSistemaAquifero);
+      const historicalData = await fetchWellHistory(selectedVariable, codigo, 'todos');
       
       const chartData = historicalData.map((record) => ({
         date: record.data,
@@ -249,21 +282,27 @@ const Visual: React.FC = () => {
     const variableConfig = getVariableConfig(selectedVariable);
     const chartData = well.chartData || [];
 
+    // Ordenar dados por data e filtrar valores válidos
+    const sortedData = chartData
+      .slice()
+      .filter(d => d.value !== null)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
     const newChart = new Chart(ctx, {
       type: selectedVariable === 'profundidade' ? 'line' : 'scatter',
       data: {
         datasets: [{
           label: `${variableConfig.label} (${getUnit(selectedVariable)})`,
-          data: chartData.map((d) => ({
+          data: sortedData.map((d) => ({
             x: new Date(d.date),
             y: d.value
           })),
-          borderColor: getColorForVariable(selectedVariable),
-          backgroundColor: getColorForVariable(selectedVariable, 0.2),
+          borderColor: variableConfig.color,
+          backgroundColor: selectedVariable === 'profundidade' ? `${variableConfig.color}33` : variableConfig.color,
           fill: selectedVariable === 'profundidade' ? 'start' : false,
           tension: 0.2,
           showLine: selectedVariable !== 'profundidade',
-          pointRadius: 3,
+          pointRadius: selectedVariable === 'profundidade' ? 3 : 4,
           pointHoverRadius: 6
         }]
       },
@@ -339,22 +378,9 @@ const Visual: React.FC = () => {
     }
   };
 
-  const getColorForVariable = (variable: string, alpha = 1): string => {
-    const colors: { [key: string]: string } = {
-      profundidade: `rgba(0, 123, 255, ${alpha})`,
-      nitrato: `rgba(40, 167, 69, ${alpha})`,
-      condutividade: `rgba(255, 193, 7, ${alpha})`,
-      precipitacao: `rgba(23, 162, 184, ${alpha})`,
-      temperaturas: `rgba(220, 53, 69, ${alpha})`,
-      caudal: `rgba(0, 123, 255, ${alpha})`
-    };
-    return colors[variable] || `rgba(108, 117, 125, ${alpha})`;
-  };
-
   const closeModal = () => {
     setShowModal(false);
     setShowTrendAnalysis(false);
-    setTrendData(null);
     if (currentChart) {
       currentChart.destroy();
       setCurrentChart(null);
@@ -365,11 +391,6 @@ const Visual: React.FC = () => {
     if (currentChart) {
       currentChart.resetZoom();
     }
-  };
-
-  const toggleTrendAnalysis = () => {
-    setShowTrendAnalysis(!showTrendAnalysis);
-    // Aqui você pode carregar dados de tendência se necessário
   };
 
   const toggleInfo = () => {
@@ -419,36 +440,24 @@ const Visual: React.FC = () => {
           </div>
           
           <div className="flex items-center space-x-2">
-            <label htmlFor="sistemaAquiferoFilter" className="font-semibold text-blue-900 whitespace-nowrap">
-              Sistema Aquífero:
-            </label>
-            <select
-              id="sistemaAquiferoFilter"
-              value={selectedSistemaAquifero}
-              onChange={(e) => setSelectedSistemaAquifero(e.target.value)}
-              className="border border-blue-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 min-w-[200px] appearance-none bg-white bg-no-repeat bg-right pr-8"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
-                backgroundPosition: 'right 0.5rem center',
-                backgroundSize: '1.5em 1.5em'
-              }}
-            >
-              {sistemasAquifero.map(sistema => (
-                <option key={sistema.value} value={sistema.value}>
-                  {sistema.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="flex items-center space-x-2">
             <label htmlFor="wellFilter" className="font-semibold text-blue-900 whitespace-nowrap">
               Pontos:
             </label>
             <select
               id="wellFilter"
               value={selectedPoint}
-              onChange={(e) => setSelectedPoint(e.target.value)}
+              onChange={(e) => {
+                const codigo = e.target.value;
+                setSelectedPoint(codigo);
+                if (codigo) {
+                  focusOnWell(codigo);
+                } else {
+                  // Zoom out para a vista inicial
+                  if (mapRef.current) {
+                    mapRef.current.setView([39.5, -8], 8);
+                  }
+                }
+              }}
               className="border border-blue-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 min-w-[120px] appearance-none bg-white bg-no-repeat bg-right pr-8"
               style={{
                 backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
@@ -564,14 +573,6 @@ const Visual: React.FC = () => {
               >
                 Resetar Zoom
               </button>
-              {selectedVariable === 'profundidade' && (
-                <button
-                  onClick={toggleTrendAnalysis}
-                  className="mt-2 ml-2 px-3 py-1 bg-green-100 text-green-800 rounded hover:bg-green-200 transition"
-                >
-                  {showTrendAnalysis ? 'Fechar análise de tendência' : 'Análise de tendência'}
-                </button>
-              )}
             </div>
             
             <div className="flex flex-row">
@@ -582,17 +583,6 @@ const Visual: React.FC = () => {
                 height="300"
                 style={{ maxWidth: '70vw', maxHeight: '70vh' }}
               ></canvas>
-              
-              {showTrendAnalysis && (
-                <div className="ml-6 p-4 bg-gray-50 border border-gray-200 rounded shadow text-xs" style={{ minWidth: '220px', maxWidth: '320px' }}>
-                  <div className="trend-title">Análise de tendência</div>
-                  <div className="trend-period-card">
-                    <div><strong>Período 1:</strong> 2020-01-01 a 2022-01-01</div>
-                    <div className="trend-type-up">Aumento da profundidade</div>
-                    <div className="trend-value">0.015 m ano<sup>-1</sup></div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
