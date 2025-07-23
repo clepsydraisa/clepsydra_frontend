@@ -89,9 +89,9 @@ export const fetchWellData = async (
   if (sistemaAquifero && sistemaAquifero !== 'todos') {
     // Mapear os códigos para os valores reais da base de dados
     const sistemaMap: { [key: string]: string } = {
-      'AL': 'T7 - ALUVIÕES DO TEJO',
-      'MD': 'T1 - BACIA DO TEJO-SADO / MARGEM DIREITA',
-      'ME': 'T3 - BACIA DO TEJO-SADO / MARGEM ESQUERDA'
+      'AL': 'T7-ALUVIÕES DO TEJO',
+      'MD': 'T1-BACIA DO TEJO-SADO / MARG',
+      'ME': 'T3-BACIA DO TEJO-SADO / MARG'
     };
     
     const sistemaReal = sistemaMap[sistemaAquifero];
@@ -100,14 +100,35 @@ export const fetchWellData = async (
     }
   }
   
-  const { data, error } = await query.select('*');
+  // Buscar todos os dados usando paginação
+  let allData: WellData[] = [];
+  let page = 0;
+  const pageSize = 1000;
   
-  if (error) {
-    console.error('Erro ao buscar dados:', error);
-    throw error;
+  while (true) {
+    const { data, error } = await query
+      .select('*')
+      .range(page * pageSize, (page + 1) * pageSize - 1);
+    
+    if (error) {
+      console.error('Erro ao buscar dados:', error);
+      throw error;
+    }
+    
+    if (!data || data.length === 0) {
+      break; // Não há mais dados
+    }
+    
+    allData = allData.concat(data);
+    
+    if (data.length < pageSize) {
+      break; // Última página
+    }
+    
+    page++;
   }
   
-  return data || [];
+  return allData;
 };
 
 // Função para buscar dados históricos de um poço específico
@@ -147,9 +168,9 @@ export const fetchWellHistory = async (
   // Aplicar filtro de sistema aquífero se especificado
   if (sistemaAquifero && sistemaAquifero !== 'todos') {
     const sistemaMap: { [key: string]: string } = {
-      'AL': 'T7 - ALUVIÕES DO TEJO',
-      'MD': 'T1 - BACIA DO TEJO-SADO / MARGEM DIREITA',
-      'ME': 'T3 - BACIA DO TEJO-SADO / MARGEM ESQUERDA'
+      'AL': 'T7-ALUVIÕES DO TEJO',
+      'MD': 'T1-BACIA DO TEJO-SADO / MARG',
+      'ME': 'T3-BACIA DO TEJO-SADO / MARG'
     };
     
     const sistemaReal = sistemaMap[sistemaAquifero];
@@ -161,12 +182,33 @@ export const fetchWellHistory = async (
   // Ordenar por data
   query = query.order('data', { ascending: true });
   
-  const { data, error } = await query.select('*');
+  // Buscar todos os dados históricos usando paginação
+  let allData: WellData[] = [];
+  let page = 0;
+  const pageSize = 1000;
   
-  if (error) {
-    console.error('Erro ao buscar histórico do poço:', error);
-    throw error;
+  while (true) {
+    const { data, error } = await query
+      .select('*')
+      .range(page * pageSize, (page + 1) * pageSize - 1);
+    
+    if (error) {
+      console.error('Erro ao buscar histórico do poço:', error);
+      throw error;
+    }
+    
+    if (!data || data.length === 0) {
+      break; // Não há mais dados
+    }
+    
+    allData = allData.concat(data);
+    
+    if (data.length < pageSize) {
+      break; // Última página
+    }
+    
+    page++;
   }
   
-  return data || [];
+  return allData;
 }; 
