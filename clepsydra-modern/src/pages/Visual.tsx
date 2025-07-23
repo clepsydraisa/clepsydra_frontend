@@ -329,16 +329,16 @@ const Visual: React.FC = () => {
       type: selectedVariable === 'profundidade' ? 'line' : 'scatter',
       data: {
         datasets: [{
-          label: `${variableConfig.label} (${getUnit(selectedVariable)})`,
+          label: selectedVariable === 'profundidade' ? 'Profundidade Nível Água (m)' : `${variableConfig.label} (${getUnit(selectedVariable)})`,
           data: sortedData.map((d) => ({
-            x: new Date(d.date),
+            x: d.date,
             y: d.value
           })),
-          borderColor: variableConfig.color,
-          backgroundColor: selectedVariable === 'profundidade' ? `${variableConfig.color}33` : variableConfig.color,
+          borderColor: selectedVariable === 'profundidade' ? '#007bff' : variableConfig.color,
+          backgroundColor: selectedVariable === 'profundidade' ? 'rgba(0,123,255,0.2)' : variableConfig.color,
           fill: selectedVariable === 'profundidade' ? 'start' : false,
           tension: 0.2,
-          showLine: selectedVariable !== 'profundidade',
+          showLine: selectedVariable === 'profundidade',
           pointRadius: selectedVariable === 'profundidade' ? 3 : 4,
           pointHoverRadius: 6
         }]
@@ -350,32 +350,28 @@ const Visual: React.FC = () => {
             type: 'time',
             time: {
               unit: 'year',
-              tooltipFormat: 'dd/MM/yyyy',
+              tooltipFormat: 'yyyy-MM-dd',
               displayFormats: {
                 year: 'yyyy',
-                month: 'MM/yyyy',
-                day: 'dd/MM/yyyy'
+                month: 'yyyy-MM',
+                day: 'yyyy-MM-dd'
               }
             },
             title: { display: true, text: 'Data' },
             ticks: {
-              maxTicksLimit: 10,
-              callback: function(value) {
-                const date = new Date(value);
-                return date.toLocaleDateString('pt-BR');
-              }
+              maxTicksLimit: 10
             }
           },
           y: {
             title: { 
               display: true, 
-              text: `${variableConfig.label} (${getUnit(selectedVariable)})`
+              text: selectedVariable === 'profundidade' ? 'Profundidade (m)' : `${variableConfig.label} (${getUnit(selectedVariable)})`
             },
             reverse: selectedVariable === 'profundidade', // Eixo Y invertido para profundidade
             min: 0,
             ticks: {
               callback: function(value) {
-                return value + ' ' + getUnit(selectedVariable);
+                return value; // Remover unidades, só mostrar o número
               }
             }
           }
@@ -396,7 +392,8 @@ const Visual: React.FC = () => {
                 return date.toLocaleDateString('pt-BR');
               },
               label: function(context) {
-                return `${variableConfig.label}: ${context.parsed.y} ${getUnit(selectedVariable)}`;
+                const label = selectedVariable === 'profundidade' ? 'Profundidade Nível Água' : variableConfig.label;
+                return `${label}: ${context.parsed.y} ${getUnit(selectedVariable)}`;
               }
             }
           }
@@ -614,6 +611,14 @@ const Visual: React.FC = () => {
               >
                 Resetar Zoom
               </button>
+              {selectedVariable === 'profundidade' && (
+                <button
+                  onClick={() => setShowTrendAnalysis(!showTrendAnalysis)}
+                  className="mt-2 ml-2 px-3 py-1 bg-green-100 text-green-800 rounded hover:bg-green-200 transition"
+                >
+                  {showTrendAnalysis ? 'Fechar análise de tendência' : 'Análise de tendência'}
+                </button>
+              )}
             </div>
             
             <div className="flex flex-row">
@@ -624,6 +629,17 @@ const Visual: React.FC = () => {
                 height="300"
                 style={{ maxWidth: '70vw', maxHeight: '70vh' }}
               ></canvas>
+              {showTrendAnalysis && selectedVariable === 'profundidade' && (
+                <div
+                  className="ml-6 p-4 bg-gray-50 border border-gray-200 rounded shadow text-xs"
+                  style={{ minWidth: '220px', maxWidth: '320px' }}
+                >
+                  <div className="font-semibold text-base mb-2">Análise de tendência</div>
+                  <div className="text-gray-600">
+                    Funcionalidade de análise de tendência em desenvolvimento...
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
