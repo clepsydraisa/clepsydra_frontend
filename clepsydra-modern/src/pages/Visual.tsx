@@ -158,6 +158,7 @@ const Visual: React.FC = () => {
       case 'nitrato':
         return cleanNumber((well as any).nitrato);
       case 'profundidade':
+        // Usar profundidade_nivel_agua para o gráfico
         return cleanNumber((well as any).profundidade_nivel_agua);
       case 'precipitacao':
         return cleanNumber((well as any).precipitacao_dia_mm);

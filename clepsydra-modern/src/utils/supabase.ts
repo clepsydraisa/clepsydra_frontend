@@ -42,6 +42,7 @@ export interface NitrateData extends WellData {
 
 export interface PiezometricData extends WellData {
   nivel_piezometrico: string;
+  profundidade_nivel_agua: string | number;
   profundidade_nivel_piezometrico: string;
 }
 
