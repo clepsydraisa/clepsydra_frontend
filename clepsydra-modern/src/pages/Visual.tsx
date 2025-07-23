@@ -262,10 +262,17 @@ const Visual: React.FC = () => {
       console.log(`Dados históricos recebidos: ${historicalData.length} registros`);
       console.log('Primeiros 3 registros históricos:', historicalData.slice(0, 3));
       
-      const chartData = historicalData.map((record) => ({
-        date: record.data,
-        value: getValueFromWell(record, selectedVariable)
-      }));
+      const chartData = historicalData
+        .map((record) => {
+          const value = getValueFromWell(record, selectedVariable);
+          if (value === null) return null;
+          
+          return {
+            date: record.data,
+            value: value
+          };
+        })
+        .filter(item => item !== null); // Remover valores null
       
       console.log('Dados processados para gráfico:', chartData.slice(0, 5));
       console.log('Total de pontos no gráfico:', chartData.length);
@@ -306,11 +313,17 @@ const Visual: React.FC = () => {
     const variableConfig = getVariableConfig(selectedVariable);
     const chartData = well.chartData || [];
 
+    console.log('Criando gráfico com dados:', chartData.length, 'pontos');
+    console.log('Primeiros 3 pontos:', chartData.slice(0, 3));
+
     // Ordenar dados por data e filtrar valores válidos
     const sortedData = chartData
       .slice()
-      .filter(d => d.value !== null)
+      .filter(d => d.value !== null && d.date)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    console.log('Dados ordenados:', sortedData.length, 'pontos');
+    console.log('Primeiros 3 pontos ordenados:', sortedData.slice(0, 3));
 
     const newChart = new Chart(ctx, {
       type: selectedVariable === 'profundidade' ? 'line' : 'scatter',
@@ -337,16 +350,20 @@ const Visual: React.FC = () => {
             type: 'time',
             time: {
               unit: 'year',
-              tooltipFormat: 'yyyy-MM-dd',
+              tooltipFormat: 'dd/MM/yyyy',
               displayFormats: {
                 year: 'yyyy',
-                month: 'yyyy-MM',
-                day: 'yyyy-MM-dd'
+                month: 'MM/yyyy',
+                day: 'dd/MM/yyyy'
               }
             },
             title: { display: true, text: 'Data' },
             ticks: {
-              maxTicksLimit: 10
+              maxTicksLimit: 10,
+              callback: function(value) {
+                const date = new Date(value);
+                return date.toLocaleDateString('pt-BR');
+              }
             }
           },
           y: {
