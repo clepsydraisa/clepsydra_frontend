@@ -5,7 +5,7 @@ import 'chartjs-adapter-date-fns';
 import zoomPlugin from 'chartjs-plugin-zoom';
 import 'leaflet.awesome-markers/dist/leaflet.awesome-markers.css';
 import 'leaflet.awesome-markers/dist/leaflet.awesome-markers.js';
-import { fetchWellData, fetchWellHistory, utmToLatLng, WellData } from '../utils/supabase';
+import { fetchWellData, fetchWellHistory, utmToLatLng, WellData, checkSistemaAquiferoValues } from '../utils/supabase';
 
 // Registrar o plugin de zoom
 Chart.register(zoomPlugin);
@@ -27,6 +27,7 @@ interface SampleDataType {
 const Visual: React.FC = () => {
   const [selectedVariable, setSelectedVariable] = useState('profundidade');
   const [selectedPoint, setSelectedPoint] = useState('');
+  const [selectedSistemaAquifero, setSelectedSistemaAquifero] = useState('todos');
   const [showModal, setShowModal] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [showTrendAnalysis, setShowTrendAnalysis] = useState(false);
@@ -35,6 +36,7 @@ const Visual: React.FC = () => {
   const [infoTableData, setInfoTableData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [wellData, setWellData] = useState<SampleDataType>({});
+  const [sistemaAquiferoOptions, setSistemaAquiferoOptions] = useState<string[]>([]);
   
   const mapRef = useRef<any>(null);
   const markersLayerRef = useRef<any>(null);
@@ -60,7 +62,15 @@ const Visual: React.FC = () => {
   useEffect(() => {
     // Carregar dados quando variável mudar
     loadWellData();
+    loadSistemaAquiferoOptions();
   }, [selectedVariable]);
+
+  useEffect(() => {
+    // Carregar dados quando sistema aquífero mudar
+    loadWellData();
+    // Resetar ponto selecionado quando sistema aquífero mudar
+    setSelectedPoint('');
+  }, [selectedSistemaAquifero]);
 
   useEffect(() => {
     // Atualizar mapa quando os dados mudarem
@@ -73,11 +83,20 @@ const Visual: React.FC = () => {
   const loadWellData = async () => {
     setLoading(true);
     try {
-      console.log(`Carregando dados para: ${selectedVariable}`);
+      console.log(`Carregando dados para: ${selectedVariable} com sistema aquífero: ${selectedSistemaAquifero}`);
       
-      const data = await fetchWellData(selectedVariable, 'todos');
+      const data = await fetchWellData(selectedVariable, selectedSistemaAquifero);
       console.log(`Dados recebidos: ${data.length} registros`);
       console.log('Primeiros 3 registros:', data.slice(0, 3));
+      
+      // Verificar se os dados estão filtrados corretamente
+      if (selectedSistemaAquifero !== 'todos') {
+        const filteredData = data.filter(well => well.sistema_aquifero === selectedSistemaAquifero);
+        console.log(`Dados filtrados por sistema aquífero "${selectedSistemaAquifero}": ${filteredData.length} registros`);
+        if (filteredData.length !== data.length) {
+          console.warn('⚠️ Filtro não está a funcionar corretamente! Dados não filtrados na query.');
+        }
+      }
       
       // Converter dados para o formato esperado
       const processedData: SampleDataType = {};
@@ -137,6 +156,17 @@ const Visual: React.FC = () => {
       setWellData({});
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadSistemaAquiferoOptions = async () => {
+    try {
+      const options = await checkSistemaAquiferoValues(selectedVariable);
+      setSistemaAquiferoOptions(options);
+      console.log('Sistemas aquíferos disponíveis:', options);
+    } catch (error) {
+      console.error('Erro ao carregar sistemas aquíferos:', error);
+      setSistemaAquiferoOptions([]);
     }
   };
 
@@ -472,6 +502,30 @@ const Visual: React.FC = () => {
               {variables.map(variable => (
                 <option key={variable.value} value={variable.value}>
                   {variable.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <label htmlFor="sistemaAquiferoFilter" className="font-semibold text-blue-900 whitespace-nowrap">
+              Sistema Aquífero:
+            </label>
+            <select
+              id="sistemaAquiferoFilter"
+              value={selectedSistemaAquifero}
+              onChange={(e) => setSelectedSistemaAquifero(e.target.value)}
+              className="border border-blue-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 min-w-[200px] appearance-none bg-white bg-no-repeat bg-right pr-8"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                backgroundPosition: 'right 0.5rem center',
+                backgroundSize: '1.5em 1.5em'
+              }}
+            >
+              <option value="todos">Todos</option>
+              {sistemaAquiferoOptions.map(option => (
+                <option key={option} value={option}>
+                  {option}
                 </option>
               ))}
             </select>

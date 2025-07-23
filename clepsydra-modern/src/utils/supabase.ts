@@ -100,18 +100,10 @@ export const fetchWellData = async (
   
   // Aplicar filtro de sistema aquífero se especificado (apenas para variáveis que têm esta coluna)
   if (sistemaAquifero && sistemaAquifero !== 'todos' && variable !== 'precipitacao') {
-    // Mapear os códigos para os valores reais da base de dados (baseado nos valores reais)
-    const sistemaMap: { [key: string]: string } = {
-      'AL': 'T7-ALUVIÕES DO TEJO',
-      'MD': 'T1-BACIA DO TEJO-SADO / MARGEM DIREITA',
-      'ME': 'T3-BACIA DO TEJO-SADO / MARGEM ESQUERDA'
-    };
-    
-    const sistemaReal = sistemaMap[sistemaAquifero];
-    console.log(`Aplicando filtro sistema_aquifero: ${sistemaReal} para variável: ${variable}`);
-    if (sistemaReal && query) {
+    console.log(`Aplicando filtro sistema_aquifero: ${sistemaAquifero} para variável: ${variable}`);
+    if (query) {
       try {
-        query = query.eq('sistema_aquifero', sistemaReal);
+        query = query.eq('sistema_aquifero', sistemaAquifero);
         console.log('Filtro aplicado com sucesso');
       } catch (error) {
         console.error('Erro ao aplicar filtro:', error);
