@@ -280,7 +280,7 @@ const Visual: React.FC = () => {
       // Atualizar os dados do poço com o histórico
       const updatedWell = {
         ...well,
-        chartData: chartData
+        chartData: chartData as Array<{ date: string; value: number | null }>
       };
       
       // Simular carregamento do gráfico

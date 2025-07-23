@@ -199,72 +199,97 @@ export const fetchWellHistory = async (
     return [];
   }
 
-  let query: any;
+  let tableName: string;
   
   switch (variable) {
     case 'profundidade':
-      query = supabase.from('piezo_tejo_loc');
+      tableName = 'piezo_tejo_loc';
       break;
     case 'condutividade':
-      query = supabase.from('condut_tejo_loc');
+      tableName = 'condut_tejo_loc';
       break;
     case 'nitrato':
-      query = supabase.from('nitrato_tejo_loc');
+      tableName = 'nitrato_tejo_loc';
       break;
     case 'precipitacao':
-      query = supabase.from('precipitacao_tejo_loc');
+      tableName = 'precipitacao_tejo_loc';
       break;
     default:
       throw new Error(`Variável não suportada: ${variable}`);
   }
   
-  // Filtrar por código do poço
-  query = query.eq('codigo', codigo);
+  console.log(`🔍 Buscando histórico para poço ${codigo} na tabela ${tableName}`);
   
-  // Aplicar filtro de sistema aquífero se especificado (apenas para variáveis que têm esta coluna)
-  if (sistemaAquifero && sistemaAquifero !== 'todos' && variable !== 'precipitacao') {
-    const sistemaMap: { [key: string]: string } = {
-      'AL': 'T7-ALUVIÕES DO TEJO',
-      'MD': 'T1-BACIA DO TEJO-SADO / MARGEM DIREITA',
-      'ME': 'T3-BACIA DO TEJO-SADO / MARGEM ESQUERDA'
-    };
+  try {
+    // Inicializar query corretamente
+    let query = supabase.from(tableName).select('*').eq('codigo', codigo);
     
-    const sistemaReal = sistemaMap[sistemaAquifero];
-    if (sistemaReal) {
-      query = query.eq('sistema_aquifero', sistemaReal);
+    // Aplicar filtro de sistema aquífero se especificado (apenas para variáveis que têm esta coluna)
+    if (sistemaAquifero && sistemaAquifero !== 'todos' && variable !== 'precipitacao') {
+      const sistemaMap: { [key: string]: string } = {
+        'AL': 'T7-ALUVIÕES DO TEJO',
+        'MD': 'T1-BACIA DO TEJO-SADO / MARGEM DIREITA',
+        'ME': 'T3-BACIA DO TEJO-SADO / MARGEM ESQUERDA'
+      };
+      
+      const sistemaReal = sistemaMap[sistemaAquifero];
+      if (sistemaReal) {
+        query = query.eq('sistema_aquifero', sistemaReal);
+        console.log(`🔍 Aplicando filtro de sistema aquífero: ${sistemaReal}`);
+      }
     }
+    
+    // Ordenar por data
+    query = query.order('data', { ascending: true });
+    
+    // Buscar todos os dados históricos usando paginação
+    let allData: WellData[] = [];
+    let page = 0;
+    const pageSize = 1000;
+    
+    console.log(`📊 Iniciando paginação com ${pageSize} registros por página`);
+    
+    while (true) {
+      console.log(`📄 Buscando página ${page + 1}...`);
+      
+      const { data, error } = await query
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+      
+      if (error) {
+        console.error('❌ Erro ao buscar histórico do poço:', error);
+        throw error;
+      }
+      
+      console.log(`📊 Página ${page + 1}: ${data?.length || 0} registros`);
+      
+      if (!data || data.length === 0) {
+        console.log(`✅ Fim dos dados na página ${page + 1}`);
+        break; // Não há mais dados
+      }
+      
+      allData = allData.concat(data);
+      console.log(`📈 Total acumulado: ${allData.length} registros`);
+      
+      if (data.length < pageSize) {
+        console.log(`✅ Última página (${data.length} < ${pageSize})`);
+        break; // Última página
+      }
+      
+      page++;
+    }
+    
+    console.log(`🎯 Histórico final para poço ${codigo}: ${allData.length} registros`);
+    
+    // Mostrar alguns exemplos dos dados
+    if (allData.length > 0) {
+      console.log('📋 Primeiros 3 registros:', allData.slice(0, 3));
+      console.log('📋 Últimos 3 registros:', allData.slice(-3));
+    }
+    
+    return allData;
+    
+  } catch (error) {
+    console.error('❌ Erro ao buscar histórico do poço:', error);
+    return [];
   }
-  
-  // Ordenar por data
-  query = query.order('data', { ascending: true });
-  
-  // Buscar todos os dados históricos usando paginação
-  let allData: WellData[] = [];
-  let page = 0;
-  const pageSize = 1000;
-  
-  while (true) {
-    const { data, error } = await query
-      .select('*')
-      .range(page * pageSize, (page + 1) * pageSize - 1);
-    
-    if (error) {
-      console.error('Erro ao buscar histórico do poço:', error);
-      throw error;
-    }
-    
-    if (!data || data.length === 0) {
-      break; // Não há mais dados
-    }
-    
-    allData = allData.concat(data);
-    
-    if (data.length < pageSize) {
-      break; // Última página
-    }
-    
-    page++;
-  }
-  
-  return allData;
 }; 
