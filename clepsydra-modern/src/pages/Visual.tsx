@@ -106,6 +106,16 @@ const Visual: React.FC = () => {
       data.forEach((well) => {
         const codigo = well.codigo;
         
+        // Debug específico para precipitação
+        if (selectedVariable === 'precipitacao') {
+          console.log(`🔍 Debug precipitação - Poço ${codigo}:`, {
+            coord_x_m: well.coord_x_m,
+            coord_y_m: well.coord_y_m,
+            tipo_coord_x: typeof well.coord_x_m,
+            tipo_coord_y: typeof well.coord_y_m
+          });
+        }
+        
         // Validar coordenadas
         if (!isValidCoordinate(well.coord_x_m) || !isValidCoordinate(well.coord_y_m)) {
           console.log(`Coordenadas inválidas para poço ${codigo}:`, well.coord_x_m, well.coord_y_m);
@@ -114,6 +124,11 @@ const Visual: React.FC = () => {
         }
         
         const [lat, lng] = utmToLatLng(well.coord_x_m, well.coord_y_m);
+        
+        // Debug específico para precipitação - coordenadas convertidas
+        if (selectedVariable === 'precipitacao') {
+          console.log(`📍 Coordenadas convertidas para ${codigo}:`, { lat, lng });
+        }
         
         // Validar valor da variável
         const value = getValueFromWell(well, selectedVariable);
