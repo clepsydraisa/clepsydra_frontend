@@ -5,7 +5,7 @@ import 'chartjs-adapter-date-fns';
 import zoomPlugin from 'chartjs-plugin-zoom';
 import 'leaflet.awesome-markers/dist/leaflet.awesome-markers.css';
 import 'leaflet.awesome-markers/dist/leaflet.awesome-markers.js';
-import { fetchWellData, fetchWellHistory, utmToLatLng, WellData, checkSistemaAquiferoValues } from '../utils/supabase';
+import { fetchWellData, fetchWellHistory, utmToLatLng, precipToLatLng, WellData, checkSistemaAquiferoValues } from '../utils/supabase';
 
 // Registrar o plugin de zoom
 Chart.register(zoomPlugin);
@@ -106,9 +106,25 @@ const Visual: React.FC = () => {
       data.forEach((well) => {
         const codigo = well.codigo;
         
-        // Debug específico para precipitação
+        // Debug detalhado para precipitação vs outras variáveis
         if (selectedVariable === 'precipitacao') {
           console.log(`🔍 Debug precipitação - Poço ${codigo}:`, {
+            coord_x_m: well.coord_x_m,
+            coord_y_m: well.coord_y_m,
+            tipo_coord_x: typeof well.coord_x_m,
+            tipo_coord_y: typeof well.coord_y_m,
+            valor_coord_x: well.coord_x_m,
+            valor_coord_y: well.coord_y_m,
+            isNaN_x: isNaN(well.coord_x_m),
+            isNaN_y: isNaN(well.coord_y_m),
+            isNull_x: well.coord_x_m === null,
+            isNull_y: well.coord_y_m === null,
+            isUndefined_x: well.coord_x_m === undefined,
+            isUndefined_y: well.coord_y_m === undefined
+          });
+        } else {
+          // Debug para outras variáveis para comparação
+          console.log(`🔍 Debug ${selectedVariable} - Poço ${codigo}:`, {
             coord_x_m: well.coord_x_m,
             coord_y_m: well.coord_y_m,
             tipo_coord_x: typeof well.coord_x_m,
@@ -118,22 +134,35 @@ const Visual: React.FC = () => {
         
         // Validar coordenadas
         if (!isValidCoordinate(well.coord_x_m) || !isValidCoordinate(well.coord_y_m)) {
-          console.log(`Coordenadas inválidas para poço ${codigo}:`, well.coord_x_m, well.coord_y_m);
+          console.log(`❌ Coordenadas inválidas para poço ${codigo}:`, {
+            coord_x_m: well.coord_x_m,
+            coord_y_m: well.coord_y_m,
+            tipo_x: typeof well.coord_x_m,
+            tipo_y: typeof well.coord_y_m,
+            variavel: selectedVariable
+          });
           invalidPoints++;
           return; // Pular este poço
         }
         
-        const [lat, lng] = utmToLatLng(well.coord_x_m, well.coord_y_m);
+        const [lat, lng] = selectedVariable === 'precipitacao' 
+          ? precipToLatLng(well.coord_x_m, well.coord_y_m)
+          : utmToLatLng(well.coord_x_m, well.coord_y_m);
         
         // Debug específico para precipitação - coordenadas convertidas
         if (selectedVariable === 'precipitacao') {
-          console.log(`📍 Coordenadas convertidas para ${codigo}:`, { lat, lng });
+          console.log(`📍 Coordenadas convertidas para ${codigo}:`, { 
+            lat, 
+            lng,
+            coord_original: [well.coord_x_m, well.coord_y_m],
+            coord_convertida: [lat, lng]
+          });
         }
         
         // Validar valor da variável
         const value = getValueFromWell(well, selectedVariable);
         if (value === null) {
-          console.log(`Valor inválido para poço ${codigo} e variável ${selectedVariable}:`, well);
+          console.log(`❌ Valor inválido para poço ${codigo} e variável ${selectedVariable}:`, well);
           invalidPoints++;
           return; // Pular este poço
         }
@@ -153,6 +182,15 @@ const Visual: React.FC = () => {
             }]
           };
           validPoints++;
+          
+          // Debug final para precipitação
+          if (selectedVariable === 'precipitacao') {
+            console.log(`✅ Poço ${codigo} processado com sucesso:`, {
+              coord_final: [lat, lng],
+              valor: value,
+              data: well.data
+            });
+          }
         }
       });
       

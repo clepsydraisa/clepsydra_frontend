@@ -66,6 +66,46 @@ export const utmToLatLng = (x: number, y: number): [number, number] => {
   }
 };
 
+// Função específica para coordenadas de precipitação (UTM zona 29N)
+export const precipToLatLng = (x: number, y: number): [number, number] => {
+  try {
+    // Tentar diferentes sistemas UTM para encontrar o correto
+    const utmSystems = [
+      "+proj=utm +zone=29 +ellps=WGS84 +datum=WGS84 +units=m +no_defs", // UTM 29N
+      "+proj=utm +zone=30 +ellps=WGS84 +datum=WGS84 +units=m +no_defs", // UTM 30N
+      "+proj=utm +zone=28 +ellps=WGS84 +datum=WGS84 +units=m +no_defs", // UTM 28N
+    ];
+    
+    // Testar cada sistema e verificar se as coordenadas fazem sentido para Portugal
+    for (const utmSystem of utmSystems) {
+      try {
+        const [lon, lat] = proj4(utmSystem, "WGS84", [x, y]);
+        
+        // Verificar se as coordenadas estão dentro de Portugal
+        if (lat >= 36.5 && lat <= 42.5 && lon >= -10.0 && lon <= -6.0) {
+          console.log(`✅ Sistema UTM correto encontrado para precipitação:`, utmSystem);
+          console.log(`📍 Coordenadas convertidas:`, { lat, lon, original: [x, y] });
+          return [lat, lon];
+        }
+      } catch (e) {
+        continue; // Tentar próximo sistema
+      }
+    }
+    
+    // Se nenhum sistema funcionar, usar UTM 29N como padrão
+    console.log(`⚠️ Usando UTM 29N como padrão para precipitação`);
+    const [lon, lat] = proj4(utmSystems[0], "WGS84", [x, y]);
+    return [lat, lon];
+    
+  } catch (error) {
+    console.error('Erro na conversão de coordenadas de precipitação:', error);
+    // Fallback para conversão aproximada
+    const lat = 39.5 + (y - 500000) / 1000000;
+    const lng = -8.0 + (x - 500000) / 1000000;
+    return [lat, lng];
+  }
+};
+
 // Função para buscar dados por variável
 export const fetchWellData = async (
   variable: string,
@@ -113,8 +153,11 @@ export const fetchWellData = async (
         '17G/02G',
         '17G/04UG'
       ];
-      console.log(`Aplicando filtro para precipitação - apenas 7 códigos específicos:`, codigosPrecipitacao);
+      console.log(`🌧️ Aplicando filtro para precipitação - apenas 7 códigos específicos:`, codigosPrecipitacao);
       query = query.in('codigo', codigosPrecipitacao);
+      
+      // Debug: verificar estrutura dos dados de precipitação
+      console.log(`🔍 Verificando estrutura da tabela ${tableName}...`);
     }
     // Aplicar filtro de sistema aquífero se especificado (apenas para variáveis que têm esta coluna)
     else if (sistemaAquifero && sistemaAquifero !== 'todos' && tableName !== 'precipitacao_tejo_loc') {
@@ -143,6 +186,15 @@ export const fetchWellData = async (
         break; // Não há mais dados
       }
       
+      // Debug específico para precipitação - verificar estrutura dos dados
+      if (tableName === 'precipitacao_tejo_loc' && page === 0) {
+        console.log(`🌧️ Estrutura dos dados de precipitação (primeiro registro):`, {
+          colunas: Object.keys(data[0]),
+          exemplo: data[0],
+          total_registros: data.length
+        });
+      }
+      
       allData = allData.concat(data);
       
       if (data.length < pageSize) {
@@ -153,6 +205,22 @@ export const fetchWellData = async (
     }
     
     console.log(`Query concluída. Total de registros: ${allData.length}`);
+    
+    // Debug final para precipitação
+    if (tableName === 'precipitacao_tejo_loc') {
+      console.log(`🌧️ Dados de precipitação carregados:`, {
+        total: allData.length,
+        codigos_unicos: Array.from(new Set(allData.map(d => d.codigo))),
+        coordenadas_exemplo: allData.slice(0, 3).map(d => ({
+          codigo: d.codigo,
+          coord_x_m: d.coord_x_m,
+          coord_y_m: d.coord_y_m,
+          tipo_x: typeof d.coord_x_m,
+          tipo_y: typeof d.coord_y_m
+        }))
+      });
+    }
+    
     return allData;
     
   } catch (error) {
