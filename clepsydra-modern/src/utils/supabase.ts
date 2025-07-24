@@ -102,8 +102,22 @@ export const fetchWellData = async (
     // Inicializar query corretamente
     let query = supabase.from(tableName).select('*');
     
+    // Filtro especial para precipitação - apenas os 7 códigos específicos
+    if (tableName === 'precipitacao_tejo_loc') {
+      const codigosPrecipitacao = [
+        '19E/01UG',
+        '20E/02UG', 
+        '20D/01C',
+        '18F/01UG',
+        '20E/01C',
+        '17G/02G',
+        '17G/04UG'
+      ];
+      console.log(`Aplicando filtro para precipitação - apenas 7 códigos específicos:`, codigosPrecipitacao);
+      query = query.in('codigo', codigosPrecipitacao);
+    }
     // Aplicar filtro de sistema aquífero se especificado (apenas para variáveis que têm esta coluna)
-    if (sistemaAquifero && sistemaAquifero !== 'todos' && variable !== 'precipitacao') {
+    else if (sistemaAquifero && sistemaAquifero !== 'todos' && tableName !== 'precipitacao_tejo_loc') {
       console.log(`Aplicando filtro sistema_aquifero: ${sistemaAquifero} para variável: ${variable}`);
       query = query.eq('sistema_aquifero', sistemaAquifero);
       console.log('Filtro aplicado com sucesso');
