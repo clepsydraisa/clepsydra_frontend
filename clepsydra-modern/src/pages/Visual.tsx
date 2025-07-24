@@ -6,6 +6,7 @@ import zoomPlugin from 'chartjs-plugin-zoom';
 import 'leaflet.awesome-markers/dist/leaflet.awesome-markers.css';
 import 'leaflet.awesome-markers/dist/leaflet.awesome-markers.js';
 import Papa from 'papaparse';
+import proj4 from 'proj4';
 import { fetchWellData, fetchWellHistory, utmToLatLng, precipToLatLng, WellData, checkSistemaAquiferoValues } from '../utils/supabase';
 
 // Registrar o plugin de zoom
@@ -17,6 +18,7 @@ interface WellDataWithChart extends WellData {
     date: string;
     value: number | null;
   }>;
+  nome?: string;
 }
 
 interface SampleDataType {
@@ -47,7 +49,7 @@ const Visual: React.FC = () => {
     { value: 'profundidade', label: 'Profundidade', icon: 'fa-tint', color: 'blue' },
     { value: 'nitrato', label: 'Nitratos', icon: 'fa-flask', color: 'green' },
     { value: 'condutividade', label: 'Condutividade', icon: 'fa-bolt', color: 'yellow' },
-    { value: 'precipitacao', label: 'Precipitação', icon: 'fa-cloud-rain', color: 'cyan' },
+    { value: 'precipitacao', label: 'Precipitação', icon: 'fa-cloud-rain', color: 'purple' },
     { value: 'rega', label: 'Rega', icon: 'fa-tint', color: 'blue' },
     { value: 'temperaturas', label: 'Temperaturas', icon: 'fa-thermometer-half', color: 'red' },
     { value: 'caudal', label: 'Caudal', icon: 'fa-water', color: 'blue' }
@@ -68,7 +70,10 @@ const Visual: React.FC = () => {
 
   useEffect(() => {
     // Carregar dados quando sistema aquífero mudar
-    loadWellData();
+    // Para precipitação, não aplicar filtro de sistema aquífero
+    if (selectedVariable !== 'precipitacao') {
+      loadWellData();
+    }
     // Resetar ponto selecionado quando sistema aquífero mudar
     setSelectedPoint('');
   }, [selectedSistemaAquifero]);
@@ -84,29 +89,14 @@ const Visual: React.FC = () => {
   const loadWellData = async () => {
     setLoading(true);
     try {
-      console.log(`Carregando dados para: ${selectedVariable} com sistema aquífero: ${selectedSistemaAquifero}`);
-      
       let data: WellData[] = [];
       
-      // Para precipitação, usar CSV local em vez de Supabase
+      // Para precipitação, usar CSV online em vez de Supabase
       if (selectedVariable === 'precipitacao') {
-        console.log('🌧️ Carregando dados de precipitação do CSV local...');
         data = await loadPrecipitacaoFromCSV();
       } else {
         // Para outras variáveis, usar Supabase
         data = await fetchWellData(selectedVariable, selectedSistemaAquifero);
-      }
-      
-      console.log(`Dados recebidos: ${data.length} registros`);
-      console.log('Primeiros 3 registros:', data.slice(0, 3));
-      
-      // Verificar se os dados estão filtrados corretamente
-      if (selectedSistemaAquifero !== 'todos') {
-        const filteredData = data.filter(well => well.sistema_aquifero === selectedSistemaAquifero);
-        console.log(`Dados filtrados por sistema aquífero "${selectedSistemaAquifero}": ${filteredData.length} registros`);
-        if (filteredData.length !== data.length) {
-          console.warn('⚠️ Filtro não está a funcionar corretamente! Dados não filtrados na query.');
-        }
       }
       
       // Converter dados para o formato esperado
@@ -117,63 +107,20 @@ const Visual: React.FC = () => {
       data.forEach((well) => {
         const codigo = well.codigo;
         
-        // Debug detalhado para precipitação vs outras variáveis
-        if (selectedVariable === 'precipitacao') {
-          console.log(`🔍 Debug precipitação - Poço ${codigo}:`, {
-            coord_x_m: well.coord_x_m,
-            coord_y_m: well.coord_y_m,
-            tipo_coord_x: typeof well.coord_x_m,
-            tipo_coord_y: typeof well.coord_y_m,
-            valor_coord_x: well.coord_x_m,
-            valor_coord_y: well.coord_y_m,
-            isNaN_x: isNaN(well.coord_x_m),
-            isNaN_y: isNaN(well.coord_y_m),
-            isNull_x: well.coord_x_m === null,
-            isNull_y: well.coord_y_m === null,
-            isUndefined_x: well.coord_x_m === undefined,
-            isUndefined_y: well.coord_y_m === undefined
-          });
-        } else {
-          // Debug para outras variáveis para comparação
-          console.log(`🔍 Debug ${selectedVariable} - Poço ${codigo}:`, {
-            coord_x_m: well.coord_x_m,
-            coord_y_m: well.coord_y_m,
-            tipo_coord_x: typeof well.coord_x_m,
-            tipo_coord_y: typeof well.coord_y_m
-          });
-        }
-        
         // Validar coordenadas
         if (!isValidCoordinate(well.coord_x_m) || !isValidCoordinate(well.coord_y_m)) {
-          console.log(`❌ Coordenadas inválidas para poço ${codigo}:`, {
-            coord_x_m: well.coord_x_m,
-            coord_y_m: well.coord_y_m,
-            tipo_x: typeof well.coord_x_m,
-            tipo_y: typeof well.coord_y_m,
-            variavel: selectedVariable
-          });
           invalidPoints++;
           return; // Pular este poço
         }
         
+        // Para precipitação, usar conversão específica de coordenadas
         const [lat, lng] = selectedVariable === 'precipitacao' 
-          ? precipToLatLng(well.coord_x_m, well.coord_y_m)
+          ? convertPrecipitacaoCoords(well.coord_x_m, well.coord_y_m)
           : utmToLatLng(well.coord_x_m, well.coord_y_m);
-        
-        // Debug específico para precipitação - coordenadas convertidas
-        if (selectedVariable === 'precipitacao') {
-          console.log(`📍 Coordenadas convertidas para ${codigo}:`, { 
-            lat, 
-            lng,
-            coord_original: [well.coord_x_m, well.coord_y_m],
-            coord_convertida: [lat, lng]
-          });
-        }
         
         // Validar valor da variável
         const value = getValueFromWell(well, selectedVariable);
         if (value === null) {
-          console.log(`❌ Valor inválido para poço ${codigo} e variável ${selectedVariable}:`, well);
           invalidPoints++;
           return; // Pular este poço
         }
@@ -193,26 +140,8 @@ const Visual: React.FC = () => {
             }]
           };
           validPoints++;
-          
-          // Debug final para precipitação
-          if (selectedVariable === 'precipitacao') {
-            console.log(`✅ Poço ${codigo} processado com sucesso:`, {
-              coord_final: [lat, lng],
-              valor: value,
-              data: well.data
-            });
-          }
         }
       });
-      
-      console.log(`Dados processados: ${validPoints} pontos válidos, ${invalidPoints} pontos inválidos`);
-      console.log(`Poços únicos: ${Object.keys(processedData[selectedVariable] || {}).length}`);
-      
-      if (Object.keys(processedData[selectedVariable] || {}).length > 0) {
-        const firstWell = Object.values(processedData[selectedVariable])[0];
-        console.log('Exemplo de poço processado:', firstWell);
-        console.log('Dados do gráfico:', firstWell.chartData);
-      }
       
       setWellData(processedData);
     } catch (error) {
@@ -223,43 +152,159 @@ const Visual: React.FC = () => {
     }
   };
 
-  // Função para carregar dados de precipitação do CSV local
+  // Função para converter coordenadas de precipitação (sistema português)
+  const convertPrecipitacaoCoords = (x: number, y: number): [number, number] => {
+    try {
+      // Definir o sistema de coordenadas português
+      proj4.defs(
+        "ESRI:102164",
+        "+proj=tmerc +lat_0=39.66666666666666 +lon_0=-8.131906111111112 +k=1 +x_0=200000 +y_0=300000 +ellps=intl +units=m +no_defs"
+      );
+      const fromProj = "ESRI:102164";
+      const toProj = "WGS84";
+      
+      // Converter coordenadas
+      const [lon, lat] = proj4(fromProj, toProj, [x, y]);
+      return [lat, lon];
+    } catch (error) {
+      console.error('Erro na conversão de coordenadas de precipitação:', error);
+      // Fallback
+      return [39.5, -8.0];
+    }
+  };
+
+  // Função para carregar dados de precipitação do CSV online
   const loadPrecipitacaoFromCSV = (): Promise<WellData[]> => {
     return new Promise((resolve, reject) => {
-      Papa.parse('/data/precipitacao.csv', {
+      // Usar o CSV online do GitHub
+      Papa.parse('https://raw.githubusercontent.com/clepsydraisa/clepsydra_frontend/refs/heads/main/data/prec_model_al.csv', {
         download: true,
         header: true,
         complete: function (results) {
-          console.log('🌧️ CSV de precipitação carregado:', results.data.length, 'registros');
-          console.log('Primeiros 3 registros do CSV:', results.data.slice(0, 3));
+          // Processar dados para obter estações únicas
+          const stations: { [key: string]: any } = {};
           
-          const data: WellData[] = results.data.map((row: any, index: number) => ({
-            id: index,
-            codigo: row.codigo,
-            coord_x_m: parseFloat(row.coord_x_m),
-            coord_y_m: parseFloat(row.coord_y_m),
-            data: row.data,
-            precipitacao_dia_mm: parseFloat(row.precipitacao_dia_mm),
-            nome: row.nome,
-            created_at: new Date().toISOString()
-          }));
+          results.data.forEach((row: any) => {
+            if (!row.codigo) return;
+            
+            if (!stations[row.codigo]) {
+              stations[row.codigo] = {
+                nome: row.nome,
+                coord_x_m: parseFloat(row.coord_x_m || '0'),
+                coord_y_m: parseFloat(row.coord_y_m || '0'),
+                data: [],
+              };
+            }
+            
+            // Adicionar dados de precipitação
+            const dateStr = row.data ? row.data.substring(0, 10) : "";
+            const precipitacao = parseFloat(row.precipitacao_dia_mm) || 0;
+            
+            stations[row.codigo].data.push({
+              date: dateStr,
+              precipitacao: precipitacao,
+            });
+          });
           
-          console.log('🌧️ Dados de precipitação processados:', data.length, 'registros');
+          // Ordenar os dados de cada estação por data
+          Object.values(stations).forEach((station) => {
+            station.data.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+          });
+          
+          // Converter para o formato WellData esperado
+          const data: WellData[] = [];
+          Object.entries(stations).forEach(([codigo, station], index) => {
+            // Usar o primeiro registro para obter dados básicos
+            const firstData = station.data[0];
+            
+            data.push({
+              id: index,
+              codigo: codigo,
+              coord_x_m: station.coord_x_m,
+              coord_y_m: station.coord_y_m,
+              data: firstData?.date || '',
+              precipitacao_dia_mm: firstData?.precipitacao || 0,
+              nome: station.nome,
+              created_at: new Date().toISOString()
+            } as any);
+          });
+          
           resolve(data);
         },
         error: function (error) {
-          console.error('❌ Erro ao carregar CSV de precipitação:', error);
+          console.error('Erro ao carregar CSV de precipitação:', error);
           reject(error);
         }
       });
     });
   };
 
+  // Função para carregar dados históricos de precipitação do CSV
+  const loadPrecipitacaoHistoricalData = (codigo: string): Promise<any[]> => {
+    return new Promise((resolve, reject) => {
+      Papa.parse('https://raw.githubusercontent.com/clepsydraisa/clepsydra_frontend/refs/heads/main/data/prec_model_al.csv', {
+        download: true,
+        header: true,
+        complete: function (results) {
+          const historicalData: any[] = [];
+          
+          results.data.forEach((row: any) => {
+            if (row.codigo === codigo && row.data && row.precipitacao_dia_mm) {
+              historicalData.push({
+                codigo: row.codigo,
+                data: row.data.substring(0, 10),
+                precipitacao_dia_mm: parseFloat(row.precipitacao_dia_mm) || 0,
+                nome: row.nome,
+                coord_x_m: parseFloat(row.coord_x_m || '0'),
+                coord_y_m: parseFloat(row.coord_y_m || '0')
+              });
+            }
+          });
+          
+          // Ordenar por data
+          historicalData.sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
+          
+          resolve(historicalData);
+        },
+        error: function (error) {
+          console.error('Erro ao carregar dados históricos de precipitação:', error);
+          reject(error);
+        }
+      });
+    });
+  };
+
+  // Função para converter coordenadas (igual ao visual.html)
+  const convertCoords = (x: string | number, y: string | number): [number, number] => {
+    try {
+      // Definir o sistema de coordenadas português (igual ao visual.html)
+      proj4.defs(
+        "ESRI:102164",
+        "+proj=tmerc +lat_0=39.66666666666666 +lon_0=-8.131906111111112 +k=1 +x_0=200000 +y_0=300000 +ellps=intl +units=m +no_defs"
+      );
+      const fromProj = "ESRI:102164";
+      const toProj = "WGS84";
+      
+      // Converter coordenadas
+      const [lon, lat] = proj4(fromProj, toProj, [parseFloat(x.toString()), parseFloat(y.toString())]);
+      return [lon, lat];
+    } catch (error) {
+      console.error('Erro na conversão de coordenadas:', error);
+      // Fallback
+      return [-8.0, 39.5];
+    }
+  };
+
   const loadSistemaAquiferoOptions = async () => {
     try {
+      // Para precipitação, não há sistemas aquíferos no CSV
+      if (selectedVariable === 'precipitacao') {
+        setSistemaAquiferoOptions([]);
+        return;
+      }
+      
       const options = await checkSistemaAquiferoValues(selectedVariable);
       setSistemaAquiferoOptions(options);
-      console.log('Sistemas aquíferos disponíveis:', options);
     } catch (error) {
       console.error('Erro ao carregar sistemas aquíferos:', error);
       setSistemaAquiferoOptions([]);
@@ -359,7 +404,6 @@ const Visual: React.FC = () => {
     if (!data) return;
     
     const codes = Object.keys(data);
-    console.log(`Encontrados ${codes.length} pontos para ${selectedVariable}`);
   };
 
   const focusOnWell = (codigo: string) => {
@@ -376,17 +420,24 @@ const Visual: React.FC = () => {
   };
 
   const openChartModal = async (codigo: string, well: WellDataWithChart) => {
-    setModalTitle(`Poço ${codigo}`);
+    // Para precipitação, usar formato "Estação" como no visual.html
+    const title = selectedVariable === 'precipitacao' 
+      ? `Estação ${codigo} - ${well.nome || ''}`
+      : `Poço ${codigo}`;
+    setModalTitle(title);
     setShowModal(true);
-    
-    console.log(`Abrindo modal para poço ${codigo}`);
-    console.log('Dados do poço:', well);
     
     // Carregar dados históricos do poço
     try {
-      const historicalData = await fetchWellHistory(selectedVariable, codigo, 'todos');
-      console.log(`Dados históricos recebidos: ${historicalData.length} registros`);
-      console.log('Primeiros 3 registros históricos:', historicalData.slice(0, 3));
+      let historicalData: any[] = [];
+      
+      if (selectedVariable === 'precipitacao') {
+        // Para precipitação, carregar dados históricos do CSV
+        historicalData = await loadPrecipitacaoHistoricalData(codigo);
+      } else {
+        // Para outras variáveis, usar Supabase
+        historicalData = await fetchWellHistory(selectedVariable, codigo, 'todos');
+      }
       
       const chartData = historicalData
         .map((record) => {
@@ -399,9 +450,6 @@ const Visual: React.FC = () => {
           };
         })
         .filter(item => item !== null); // Remover valores null
-      
-      console.log('Dados processados para gráfico:', chartData.slice(0, 5));
-      console.log('Total de pontos no gráfico:', chartData.length);
       
       // Atualizar os dados do poço com o histórico
       const updatedWell = {
@@ -439,20 +487,14 @@ const Visual: React.FC = () => {
     const variableConfig = getVariableConfig(selectedVariable);
     const chartData = well.chartData || [];
 
-    console.log('Criando gráfico com dados:', chartData.length, 'pontos');
-    console.log('Primeiros 3 pontos:', chartData.slice(0, 3));
-
     // Ordenar dados por data e filtrar valores válidos
     const sortedData = chartData
       .slice()
       .filter(d => d.value !== null && d.date)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    console.log('Dados ordenados:', sortedData.length, 'pontos');
-    console.log('Primeiros 3 pontos ordenados:', sortedData.slice(0, 3));
-
     const newChart = new Chart(ctx, {
-      type: selectedVariable === 'profundidade' ? 'line' : 'scatter',
+      type: selectedVariable === 'precipitacao' ? 'line' : (selectedVariable === 'profundidade' ? 'line' : 'scatter'),
       data: {
         datasets: [{
           label: selectedVariable === 'profundidade' ? 'Profundidade Nível Água (m)' : `${variableConfig.label} (${getUnit(selectedVariable)})`,
@@ -460,12 +502,12 @@ const Visual: React.FC = () => {
             x: d.date,
             y: d.value
           })),
-          borderColor: selectedVariable === 'profundidade' ? '#007bff' : variableConfig.color,
-          backgroundColor: selectedVariable === 'profundidade' ? 'rgba(0,123,255,0.2)' : variableConfig.color,
-          fill: selectedVariable === 'profundidade' ? 'start' : false,
+          borderColor: selectedVariable === 'precipitacao' ? '#800080' : (selectedVariable === 'profundidade' ? '#007bff' : variableConfig.color),
+          backgroundColor: selectedVariable === 'precipitacao' ? 'rgba(128,0,128,0.2)' : (selectedVariable === 'profundidade' ? 'rgba(0,123,255,0.2)' : variableConfig.color),
+          fill: selectedVariable === 'precipitacao' ? 'start' : (selectedVariable === 'profundidade' ? 'start' : false),
           tension: 0.2,
-          showLine: selectedVariable === 'profundidade',
-          pointRadius: selectedVariable === 'profundidade' ? 3 : 4,
+          showLine: selectedVariable === 'precipitacao' || selectedVariable === 'profundidade',
+          pointRadius: selectedVariable === 'precipitacao' || selectedVariable === 'profundidade' ? 3 : 4,
           pointHoverRadius: 6
         }]
       },
@@ -603,29 +645,31 @@ const Visual: React.FC = () => {
             </select>
           </div>
           
-          <div className="flex items-center space-x-2">
-            <label htmlFor="sistemaAquiferoFilter" className="font-semibold text-blue-900 whitespace-nowrap">
-              Sistema Aquífero:
-            </label>
-            <select
-              id="sistemaAquiferoFilter"
-              value={selectedSistemaAquifero}
-              onChange={(e) => setSelectedSistemaAquifero(e.target.value)}
-              className="border border-blue-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 min-w-[200px] appearance-none bg-white bg-no-repeat bg-right pr-8"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
-                backgroundPosition: 'right 0.5rem center',
-                backgroundSize: '1.5em 1.5em'
-              }}
-            >
-              <option value="todos">Todos</option>
-              {sistemaAquiferoOptions.map(option => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
+          {selectedVariable !== 'precipitacao' && (
+            <div className="flex items-center space-x-2">
+              <label htmlFor="sistemaAquiferoFilter" className="font-semibold text-blue-900 whitespace-nowrap">
+                Sistema Aquífero:
+              </label>
+              <select
+                id="sistemaAquiferoFilter"
+                value={selectedSistemaAquifero}
+                onChange={(e) => setSelectedSistemaAquifero(e.target.value)}
+                className="border border-blue-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 min-w-[200px] appearance-none bg-white bg-no-repeat bg-right pr-8"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                  backgroundPosition: 'right 0.5rem center',
+                  backgroundSize: '1.5em 1.5em'
+                }}
+              >
+                <option value="todos">Todos</option>
+                {sistemaAquiferoOptions.map(option => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           
           <div className="flex items-center space-x-2">
             <label htmlFor="wellFilter" className="font-semibold text-blue-900 whitespace-nowrap">
