@@ -2,7 +2,7 @@
  * Map Performance Optimization Utilities
  * 
  * This module provides utilities for optimizing map performance,
- * including icon caching, batch processing, and performance monitoring.
+ * including icon caching, tile prefetching, and resource preloading.
  */
 
 import L from 'leaflet';
@@ -31,6 +31,110 @@ export const getCachedIcon = (
   const icon = iconFactory();
   globalIconCache.set(key, icon);
   return icon;
+};
+
+/**
+ * Preload map tiles for better performance
+ */
+export const preloadMapTiles = (
+  tileUrl: string,
+  bounds: { zoom: number; x: number; y: number }[]
+): void => {
+  bounds.forEach(({ zoom, x, y }) => {
+    const url = tileUrl
+      .replace('{z}', zoom.toString())
+      .replace('{x}', x.toString())
+      .replace('{y}', y.toString());
+    
+    const img = new Image();
+    img.src = url;
+    // Don't wait for load - just trigger the browser cache
+  });
+};
+
+/**
+ * Preload critical map resources
+ */
+export const preloadMapResources = (): void => {
+  // Preload Leaflet marker images
+  const markerImages = [
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png'
+  ];
+  
+  markerImages.forEach(url => {
+    const img = new Image();
+    img.src = url;
+  });
+  
+  // Preload Font Awesome CSS if not already loaded
+  if (!document.querySelector('link[href*="font-awesome"]')) {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css';
+    link.as = 'style';
+    link.onload = () => {
+      link.rel = 'stylesheet';
+    };
+    document.head.appendChild(link);
+  }
+};
+
+/**
+ * Prefetch GeoJSON data with caching
+ */
+let geoJSONCache: any = null;
+let geoJSONPromise: Promise<any> | null = null;
+
+export const prefetchGeoJSON = async (url: string): Promise<any> => {
+  if (geoJSONCache) {
+    return geoJSONCache;
+  }
+  
+  if (geoJSONPromise) {
+    return geoJSONPromise;
+  }
+  
+  geoJSONPromise = fetch(url)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Failed to fetch GeoJSON: ${response.statusText}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      geoJSONCache = data;
+      return data;
+    })
+    .catch(error => {
+      console.error('Error prefetching GeoJSON:', error);
+      geoJSONPromise = null; // Reset promise on error
+      return null;
+    });
+  
+  return geoJSONPromise;
+};
+
+/**
+ * Mediterranean region tile bounds for prefetching
+ */
+export const getMediterraneanTileBounds = (zoom: number = 4): { zoom: number; x: number; y: number }[] => {
+  const bounds = [];
+  
+  // Cover the Mediterranean region
+  const startX = Math.floor(8 * Math.pow(2, zoom - 4));
+  const endX = Math.floor(9 * Math.pow(2, zoom - 4));
+  const startY = Math.floor(6 * Math.pow(2, zoom - 4));
+  const endY = Math.floor(7 * Math.pow(2, zoom - 4));
+  
+  for (let x = startX; x <= endX; x++) {
+    for (let y = startY; y <= endY; y++) {
+      bounds.push({ zoom, x, y });
+    }
+  }
+  
+  return bounds;
 };
 
 /**
@@ -81,7 +185,7 @@ export const debounce = <T extends (...args: any[]) => void>(
 /**
  * Create a loading indicator element
  */
-export const createLoadingIndicator = (message = 'Carregando pontos...'): HTMLElement => {
+export const createLoadingIndicator = (message: string = 'Loading...'): HTMLElement => {
   const overlay = document.createElement('div');
   overlay.style.cssText = `
     position: fixed;
@@ -182,40 +286,4 @@ export class PerformanceMonitor {
   getMetrics(): Map<string, number> {
     return new Map(this.metrics);
   }
-}
-
-/**
- * Optimized marker creation with caching
- */
-export const createOptimizedMarker = (
-  coord: [number, number],
-  icon: L.Icon | L.DivIcon,
-  onClick: () => void
-): L.Marker => {
-  const marker = L.marker(coord, { icon });
-  marker.on('click', onClick);
-  return marker;
-};
-
-/**
- * Batch add markers to map for better performance
- */
-export const batchAddMarkers = (
-  markers: L.Marker[],
-  map: L.Map,
-  layerGroup: L.LayerGroup,
-  batchSize = 50
-): void => {
-  batchProcess(
-    markers,
-    batchSize,
-    (batch) => {
-      batch.forEach(marker => {
-        marker.addTo(layerGroup);
-      });
-    },
-    () => {
-      console.log(`✅ ${markers.length} marcadores adicionados ao mapa`);
-    }
-  );
-}; 
+} 
