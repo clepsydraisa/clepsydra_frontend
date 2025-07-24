@@ -6,6 +6,15 @@ import zoomPlugin from 'chartjs-plugin-zoom';
 import 'leaflet.awesome-markers/dist/leaflet.awesome-markers.css';
 import 'leaflet.awesome-markers/dist/leaflet.awesome-markers.js';
 import { fetchWellData, fetchWellHistory, utmToLatLng, precipToLatLng, WellData, checkSistemaAquiferoValues } from '../utils/supabase';
+import { 
+  getCachedIcon, 
+  batchProcess, 
+  debounce, 
+  createLoadingIndicator, 
+  PerformanceMonitor,
+  createOptimizedMarker,
+  batchAddMarkers
+} from '../utils/mapOptimization';
 
 // Registrar o plugin de zoom
 Chart.register(zoomPlugin);
@@ -42,6 +51,16 @@ const Visual: React.FC = () => {
   const markersLayerRef = useRef<any>(null);
   const chartRef = useRef<HTMLCanvasElement>(null);
 
+  // Debounced update map for better performance
+  const debouncedUpdateMap = useRef(
+    debounce(() => {
+      if (mapRef.current && Object.keys(wellData).length > 0) {
+        updateMap();
+        updateWellFilter();
+      }
+    }, 100)
+  ).current;
+
   const variables = [
     { value: 'profundidade', label: 'Profundidade', icon: 'fa-tint', color: 'blue' },
     { value: 'nitrato', label: 'Nitratos', icon: 'fa-flask', color: 'green' },
@@ -74,14 +93,19 @@ const Visual: React.FC = () => {
 
   useEffect(() => {
     // Atualizar mapa quando os dados mudarem
-    if (mapRef.current && Object.keys(wellData).length > 0) {
-      updateMap();
-      updateWellFilter();
-    }
+    debouncedUpdateMap();
   }, [wellData, selectedVariable]);
 
   const loadWellData = async () => {
     setLoading(true);
+    
+    // Mostrar indicador de carregamento otimizado
+    const loadingIndicator = createLoadingIndicator('Carregando dados...');
+    document.body.appendChild(loadingIndicator);
+    
+    const perfMonitor = PerformanceMonitor.getInstance();
+    perfMonitor.startTimer('loadWellData');
+    
     try {
       console.log(`Carregando dados para: ${selectedVariable} com sistema aquífero: ${selectedSistemaAquifero}`);
       
@@ -98,117 +122,132 @@ const Visual: React.FC = () => {
         }
       }
       
-      // Converter dados para o formato esperado
+      // Processar dados em lotes para melhor performance
       const processedData: SampleDataType = {};
       let validPoints = 0;
       let invalidPoints = 0;
       
-      data.forEach((well) => {
-        const codigo = well.codigo;
-        
-        // Debug detalhado para precipitação vs outras variáveis
-        if (selectedVariable === 'precipitacao') {
-          console.log(`🔍 Debug precipitação - Poço ${codigo}:`, {
-            coord_x_m: well.coord_x_m,
-            coord_y_m: well.coord_y_m,
-            tipo_coord_x: typeof well.coord_x_m,
-            tipo_coord_y: typeof well.coord_y_m,
-            valor_coord_x: well.coord_x_m,
-            valor_coord_y: well.coord_y_m,
-            isNaN_x: isNaN(well.coord_x_m),
-            isNaN_y: isNaN(well.coord_y_m),
-            isNull_x: well.coord_x_m === null,
-            isNull_y: well.coord_y_m === null,
-            isUndefined_x: well.coord_x_m === undefined,
-            isUndefined_y: well.coord_y_m === undefined
+      // Processar em lotes de 100 para melhor performance
+      batchProcess(
+        data,
+        100,
+        (batch) => {
+          batch.forEach((well) => {
+            const codigo = well.codigo;
+            
+            // Debug detalhado para precipitação vs outras variáveis
+            if (selectedVariable === 'precipitacao') {
+              console.log(`🔍 Debug precipitação - Poço ${codigo}:`, {
+                coord_x_m: well.coord_x_m,
+                coord_y_m: well.coord_y_m,
+                tipo_coord_x: typeof well.coord_x_m,
+                tipo_coord_y: typeof well.coord_y_m,
+                valor_coord_x: well.coord_x_m,
+                valor_coord_y: well.coord_y_m,
+                isNaN_x: isNaN(well.coord_x_m),
+                isNaN_y: isNaN(well.coord_y_m),
+                isNull_x: well.coord_x_m === null,
+                isNull_y: well.coord_y_m === null,
+                isUndefined_x: well.coord_x_m === undefined,
+                isUndefined_y: well.coord_y_m === undefined
+              });
+            } else {
+              // Debug para outras variáveis para comparação
+              console.log(`🔍 Debug ${selectedVariable} - Poço ${codigo}:`, {
+                coord_x_m: well.coord_x_m,
+                coord_y_m: well.coord_y_m,
+                tipo_coord_x: typeof well.coord_x_m,
+                tipo_coord_y: typeof well.coord_y_m
+              });
+            }
+            
+            // Validar coordenadas
+            if (!isValidCoordinate(well.coord_x_m) || !isValidCoordinate(well.coord_y_m)) {
+              console.log(`❌ Coordenadas inválidas para poço ${codigo}:`, {
+                coord_x_m: well.coord_x_m,
+                coord_y_m: well.coord_y_m,
+                tipo_x: typeof well.coord_x_m,
+                tipo_y: typeof well.coord_y_m,
+                variavel: selectedVariable
+              });
+              invalidPoints++;
+              return; // Pular este poço
+            }
+            
+            const [lat, lng] = selectedVariable === 'precipitacao' 
+              ? precipToLatLng(well.coord_x_m, well.coord_y_m)
+              : utmToLatLng(well.coord_x_m, well.coord_y_m);
+            
+            // Debug específico para precipitação - coordenadas convertidas
+            if (selectedVariable === 'precipitacao') {
+              console.log(`📍 Coordenadas convertidas para ${codigo}:`, { 
+                lat, 
+                lng,
+                coord_original: [well.coord_x_m, well.coord_y_m],
+                coord_convertida: [lat, lng]
+              });
+            }
+            
+            // Validar valor da variável
+            const value = getValueFromWell(well, selectedVariable);
+            if (value === null) {
+              console.log(`❌ Valor inválido para poço ${codigo} e variável ${selectedVariable}:`, well);
+              invalidPoints++;
+              return; // Pular este poço
+            }
+            
+            if (!processedData[selectedVariable]) {
+              processedData[selectedVariable] = {};
+            }
+            
+            // Se já existe um poço com este código, não duplicar
+            if (!processedData[selectedVariable][codigo]) {
+              processedData[selectedVariable][codigo] = {
+                ...well,
+                coord: [lat, lng],
+                chartData: [{
+                  date: well.data,
+                  value: value
+                }]
+              };
+              validPoints++;
+              
+              // Debug final para precipitação
+              if (selectedVariable === 'precipitacao') {
+                console.log(`✅ Poço ${codigo} processado com sucesso:`, {
+                  coord_final: [lat, lng],
+                  valor: value,
+                  data: well.data
+                });
+              }
+            }
           });
-        } else {
-          // Debug para outras variáveis para comparação
-          console.log(`🔍 Debug ${selectedVariable} - Poço ${codigo}:`, {
-            coord_x_m: well.coord_x_m,
-            coord_y_m: well.coord_y_m,
-            tipo_coord_x: typeof well.coord_x_m,
-            tipo_coord_y: typeof well.coord_y_m
-          });
-        }
-        
-        // Validar coordenadas
-        if (!isValidCoordinate(well.coord_x_m) || !isValidCoordinate(well.coord_y_m)) {
-          console.log(`❌ Coordenadas inválidas para poço ${codigo}:`, {
-            coord_x_m: well.coord_x_m,
-            coord_y_m: well.coord_y_m,
-            tipo_x: typeof well.coord_x_m,
-            tipo_y: typeof well.coord_y_m,
-            variavel: selectedVariable
-          });
-          invalidPoints++;
-          return; // Pular este poço
-        }
-        
-        const [lat, lng] = selectedVariable === 'precipitacao' 
-          ? precipToLatLng(well.coord_x_m, well.coord_y_m)
-          : utmToLatLng(well.coord_x_m, well.coord_y_m);
-        
-        // Debug específico para precipitação - coordenadas convertidas
-        if (selectedVariable === 'precipitacao') {
-          console.log(`📍 Coordenadas convertidas para ${codigo}:`, { 
-            lat, 
-            lng,
-            coord_original: [well.coord_x_m, well.coord_y_m],
-            coord_convertida: [lat, lng]
-          });
-        }
-        
-        // Validar valor da variável
-        const value = getValueFromWell(well, selectedVariable);
-        if (value === null) {
-          console.log(`❌ Valor inválido para poço ${codigo} e variável ${selectedVariable}:`, well);
-          invalidPoints++;
-          return; // Pular este poço
-        }
-        
-        if (!processedData[selectedVariable]) {
-          processedData[selectedVariable] = {};
-        }
-        
-        // Se já existe um poço com este código, não duplicar
-        if (!processedData[selectedVariable][codigo]) {
-          processedData[selectedVariable][codigo] = {
-            ...well,
-            coord: [lat, lng],
-            chartData: [{
-              date: well.data,
-              value: value
-            }]
-          };
-          validPoints++;
+        },
+        () => {
+          console.log(`Dados processados: ${validPoints} pontos válidos, ${invalidPoints} pontos inválidos`);
+          console.log(`Poços únicos: ${Object.keys(processedData[selectedVariable] || {}).length}`);
           
-          // Debug final para precipitação
-          if (selectedVariable === 'precipitacao') {
-            console.log(`✅ Poço ${codigo} processado com sucesso:`, {
-              coord_final: [lat, lng],
-              valor: value,
-              data: well.data
-            });
+          if (Object.keys(processedData[selectedVariable] || {}).length > 0) {
+            const firstWell = Object.values(processedData[selectedVariable])[0];
+            console.log('Exemplo de poço processado:', firstWell);
+            console.log('Dados do gráfico:', firstWell.chartData);
           }
+          
+          setWellData(processedData);
         }
-      });
+      );
       
-      console.log(`Dados processados: ${validPoints} pontos válidos, ${invalidPoints} pontos inválidos`);
-      console.log(`Poços únicos: ${Object.keys(processedData[selectedVariable] || {}).length}`);
-      
-      if (Object.keys(processedData[selectedVariable] || {}).length > 0) {
-        const firstWell = Object.values(processedData[selectedVariable])[0];
-        console.log('Exemplo de poço processado:', firstWell);
-        console.log('Dados do gráfico:', firstWell.chartData);
-      }
-      
-      setWellData(processedData);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
       setWellData({});
     } finally {
       setLoading(false);
+      perfMonitor.endTimer('loadWellData');
+      
+      // Remover indicador de carregamento
+      if (document.body.contains(loadingIndicator)) {
+        document.body.removeChild(loadingIndicator);
+      }
     }
   };
 
@@ -288,6 +327,9 @@ const Visual: React.FC = () => {
   };
 
   const updateMap = () => {
+    const perfMonitor = PerformanceMonitor.getInstance();
+    perfMonitor.startTimer('updateMap');
+    
     clearMarkers();
     const data = wellData[selectedVariable];
     if (!data) return;
@@ -295,20 +337,33 @@ const Visual: React.FC = () => {
     const L = (window as any).L;
     const variableConfig = getVariableConfig(selectedVariable);
     
-    Object.entries(data).forEach(([codigo, well]) => {
-      // Criar marcador personalizado com ícone
-      const marker = L.marker(well.coord, {
-        icon: L.AwesomeMarkers.icon({
-          icon: variableConfig.icon,
-          markerColor: variableConfig.color,
-          prefix: 'fa'
-        })
-      });
-      
-      marker.addTo(markersLayerRef.current).on('click', () => {
-        openChartModal(codigo, well);
-      });
+    // Criar ícone em cache para melhor performance
+    const iconKey = `${variableConfig.icon}-${variableConfig.color}`;
+    const icon = getCachedIcon(iconKey, () => 
+      L.AwesomeMarkers.icon({
+        icon: variableConfig.icon,
+        markerColor: variableConfig.color,
+        prefix: 'fa'
+      })
+    );
+    
+    // Preparar todos os marcadores
+    const markers: any[] = [];
+    const entries = Object.entries(data);
+    
+    entries.forEach(([codigo, well]) => {
+      if (well.coord) {
+        const marker = createOptimizedMarker(well.coord, icon, () => {
+          openChartModal(codigo, well);
+        });
+        markers.push(marker);
+      }
     });
+    
+    // Adicionar marcadores em lotes para melhor performance
+    batchAddMarkers(markers, mapRef.current, markersLayerRef.current, 25);
+    
+    perfMonitor.endTimer('updateMap');
   };
 
   const updateWellFilter = () => {
