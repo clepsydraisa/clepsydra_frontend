@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/clepsydra_frontend/static/css/main.74850c2d.css",
-    "main.js": "/clepsydra_frontend/static/js/main.89ff9b92.js",
+    "main.js": "/clepsydra_frontend/static/js/main.7e089436.js",
     "static/js/453.2ddcdf35.chunk.js": "/clepsydra_frontend/static/js/453.2ddcdf35.chunk.js",
     "static/media/10.jpg": "/clepsydra_frontend/static/media/10.196641fb0e8dbbd837f2.jpg",
     "static/media/pt5_bg.png": "/clepsydra_frontend/static/media/pt5_bg.1e20327d52d19dc75a86.png",
@@ -33,11 +33,11 @@
     "static/media/arbvs_lg.jpg": "/clepsydra_frontend/static/media/arbvs_lg.c5f94f914939c270074d.jpg",
     "index.html": "/clepsydra_frontend/index.html",
     "main.74850c2d.css.map": "/clepsydra_frontend/static/css/main.74850c2d.css.map",
-    "main.89ff9b92.js.map": "/clepsydra_frontend/static/js/main.89ff9b92.js.map",
+    "main.7e089436.js.map": "/clepsydra_frontend/static/js/main.7e089436.js.map",
     "453.2ddcdf35.chunk.js.map": "/clepsydra_frontend/static/js/453.2ddcdf35.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.74850c2d.css",
-    "static/js/main.89ff9b92.js"
+    "static/js/main.7e089436.js"
   ]
 }

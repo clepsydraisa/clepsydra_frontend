@@ -177,7 +177,7 @@ const Visual: React.FC = () => {
   const loadPrecipitacaoFromCSV = (): Promise<WellData[]> => {
     return new Promise((resolve, reject) => {
       // Usar o CSV online do GitHub
-      Papa.parse('https://raw.githubusercontent.com/clepsydraisa/clepsydra_frontend/refs/heads/main/data/prec_model_al.csv', {
+      Papa.parse('https://raw.githubusercontent.com/clepsydraisa/clepsydra_frontend/main/data/prec_model_al.csv', {
         download: true,
         header: true,
         complete: function (results) {
@@ -242,7 +242,7 @@ const Visual: React.FC = () => {
   // Função para carregar dados históricos de precipitação do CSV
   const loadPrecipitacaoHistoricalData = (codigo: string): Promise<any[]> => {
     return new Promise((resolve, reject) => {
-      Papa.parse('https://raw.githubusercontent.com/clepsydraisa/clepsydra_frontend/refs/heads/main/data/prec_model_al.csv', {
+      Papa.parse('https://raw.githubusercontent.com/clepsydraisa/clepsydra_frontend/main/data/prec_model_al.csv', {
         download: true,
         header: true,
         complete: function (results) {
