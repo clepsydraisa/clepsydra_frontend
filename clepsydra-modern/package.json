@@ -42,7 +42,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "npm run copy-data && react-scripts build",
-    "copy-data": "cp -r ../data ./public/",
+    "copy-data": "mkdir -p public/data && cp -r ../data/* ./public/data/",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "build:prod": "npm run copy-data && GENERATE_SOURCEMAP=false react-scripts build",
