@@ -6,12 +6,12 @@
     </linearGradient>
   </defs>
   
-  <!-- Water drop only -->
-  <path d="M50 20 C60 20 70 30 70 45 C70 60 50 80 50 80 C50 80 30 60 30 45 C30 30 40 20 50 20 Z" 
+  <!-- Simple water drop -->
+  <path d="M50 15 C65 15 75 25 75 45 C75 65 50 85 50 85 C50 85 25 65 25 45 C25 25 35 15 50 15 Z" 
         fill="url(#waterGradient)" 
         stroke="#174192" 
-        stroke-width="2"/>
+        stroke-width="1"/>
   
-  <!-- Highlight -->
-  <ellipse cx="45" cy="35" rx="8" ry="12" fill="white" opacity="0.3"/>
+  <!-- Simple highlight -->
+  <ellipse cx="45" cy="35" rx="6" ry="10" fill="white" opacity="0.4"/>
 </svg> 
